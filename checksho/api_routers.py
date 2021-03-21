@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from users import views as users_views
+from users.api import views as users_views
 from campaigns.api import views as campaigns_views
 
 
