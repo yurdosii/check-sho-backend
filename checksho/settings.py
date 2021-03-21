@@ -28,27 +28,35 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
 
-# Application definition
+# APPS
 
-INSTALLED_APPS = [
-    # default
+DEFAULT_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # third party
+]
+
+THIRD_PARTY_APPS = [
     "rest_framework",
+    "corsheaders",
+    "rest_framework_serializer_extensions",
 ]
 
-CUSTOM_APPS = [
+LOCAL_APPS = [
     "users.apps.UsersConfig",
+    "campaigns.apps.CampaignsConfig",
 ]
 
-INSTALLED_APPS += CUSTOM_APPS
+INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+
+# MIDDLEWARE
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -77,6 +85,11 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "checksho.wsgi.application"
+
+
+# CORS
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Database
