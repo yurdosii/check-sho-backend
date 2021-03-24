@@ -6,6 +6,8 @@ from django.utils.translation import ugettext_lazy as _
 # - complex campaigns (2 markets)
 # CampaignItem model to make it difficult
 
+# parsers - singleton ???
+
 
 class Campaign(models.Model):
     title = models.CharField(_("Title"), max_length=1024)
@@ -25,11 +27,51 @@ class Campaign(models.Model):
         null=True,
     )
 
+    HOUR = "HOUR"
+    DAY = "DAY"
+    WEEK = "WEEK"
+    INTERVAL_CHOICES = (
+        (HOUR, "HOUR"),
+        (DAY, "DAY"),
+        (WEEK, "WEEK"),
+    )
+    interval = models.CharField(
+        max_length=20, choices=INTERVAL_CHOICES, db_index=True, blank=True, null=True
+    )
+
+    is_active = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Campaign: {self.title} by {self.owner.username}"
+
+
+class CampaignItem(models.Model):
+    title = models.CharField(_("Title"), max_length=1024, blank=True, null=True)
+    description = models.CharField(
+        _("Description"), null=True, blank=True, max_length=1024
+    )
+
+    url = models.URLField(max_length=255)
+
+    campaign = models.ForeignKey(
+        "campaigns.Campaign",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
+
+    is_active = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"CampaignItem: {self.title} - {self.url}"
+
+    # TODO - - validation by market url - думаю не
 
 
 class Market(models.Model):
@@ -42,7 +84,12 @@ class Market(models.Model):
     def __str__(self):
         return f"Market: {self.title} - {self.url}"
 
+    @property
+    def parser(self):
+        return
 
+
+# TODO - (idea) - to track item's price протягом певного часу
 # class MarketItem(models.Model):
 #     title = models.CharField(_("Title"), max_length=1024)
 #     url = models.CharField(max_length=255, validators=[NoSchemeURLValidator()])
