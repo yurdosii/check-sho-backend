@@ -45,7 +45,7 @@ class Campaign(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Campaign: {self.title} by {self.owner.username}"
+        return f"Campaign: {self.title} by {self.owner}"
 
 
 class CampaignItem(models.Model):
@@ -59,6 +59,7 @@ class CampaignItem(models.Model):
     campaign = models.ForeignKey(
         "campaigns.Campaign",
         on_delete=models.CASCADE,
+        related_name="campaign_items",
         blank=True,
         null=True,
     )
