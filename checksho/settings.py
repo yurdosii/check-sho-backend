@@ -168,3 +168,16 @@ LOGGING = {
     },
     "root": {"level": "INFO", "handlers": ["console"]},
 }
+
+
+# Email
+# https://docs.djangoproject.com/en/3.1/topics/email/
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_TIMEOUT = 10
+
+DEFAULT_FROM_EMAIL = "CheckSho diploma <diploma.yurii@gmail.com>"
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
