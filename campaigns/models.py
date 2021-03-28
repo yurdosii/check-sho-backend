@@ -3,9 +3,6 @@ from django.utils.translation import ugettext_lazy as _
 
 
 # TODO
-# - complex campaigns (2 markets)
-# CampaignItem model to make it difficult
-
 # parsers - singleton ???
 
 
