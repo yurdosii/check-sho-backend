@@ -9,6 +9,8 @@ class CampaignItemSerializers(serializers.ModelSerializer):
         model = campaigns_models.CampaignItem
         exclude = []
 
+    # TODO - url validation - make GET requests if not response.ok: raise validation error
+
 
 class CampaignSerializer(SerializerExtensionsMixin, serializers.ModelSerializer):
     class Meta:

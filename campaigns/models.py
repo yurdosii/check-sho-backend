@@ -47,6 +47,7 @@ class Campaign(models.Model):
         return f"Campaign: {self.title} by {self.owner}"
 
 
+# TODO (подумай) - різні налаштування CampaignItem, типу - "check price", "перевіряти наявність"
 class CampaignItem(models.Model):
     title = models.CharField(_("Title"), max_length=1024, blank=True, null=True)
     description = models.CharField(
