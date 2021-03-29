@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from . import helpers
+
 
 # TODO
 # parsers - singleton ???
@@ -45,6 +47,7 @@ class Campaign(models.Model):
         return f"Campaign: {self.title} by {self.owner}"
 
 
+# TODO (подумай) - різні налаштування CampaignItem, типу - "check price", "перевіряти наявність"
 class CampaignItem(models.Model):
     title = models.CharField(_("Title"), max_length=1024, blank=True, null=True)
     description = models.CharField(
@@ -84,7 +87,7 @@ class Market(models.Model):
 
     @property
     def parser(self):
-        return
+        return helpers.get_market_parser(self)
 
 
 # TODO - (idea) - to track item's price протягом певного часу

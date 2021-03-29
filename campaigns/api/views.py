@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_serializer_extensions.views import SerializerExtensionsAPIViewMixin
 
+from .. import helpers as campaigns_helpers
 from .. import models as campaigns_models
 from . import serializers as campaigns_serializers
 
@@ -15,6 +16,19 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
     queryset = campaigns_models.Campaign.objects.all()
     serializer_class = campaigns_serializers.CampaignSerializer
     lookup_field = "pk"
+
+    @action(detail=True, methods=["post"])
+    def run_campaign(self, request, **kwargs):
+        # TODO - only campaign's owner can run campaign (add validation)
+        campaign = self.get_object()
+        if not campaign.is_active:
+            return Response(
+                {"error": "Campaign isn't active"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        results = campaigns_helpers.run_endpoint_campaign(campaign)
+
+        return Response(results)
 
 
 class MarketViewSet(viewsets.ModelViewSet):
