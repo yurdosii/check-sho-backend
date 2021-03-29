@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 
 from abc import ABC, abstractmethod
 
+from .constants import CURRENCIES_CONVERSION
 from .patterns import singleton
 
 # TODO
@@ -12,8 +13,12 @@ from .patterns import singleton
 
 class CustomParser(ABC):
     @abstractmethod
-    def get_price(self, link: str):
+    def parse(self, link: str):
         pass
+
+    def return_empty_result(self, url: str):
+        result = ParserResult(url=url, is_available=False)
+        return result
 
     def write_to_file(data):
         f = open("site.html", "wb")
@@ -21,44 +26,74 @@ class CustomParser(ABC):
         f.close()
 
 
-# class ParserResult:
-#     def __init__(
-#         self, price, currency, is_on_sale=False, before_price=0, is_waiting=False
-#     ):
-#         self.price = price
-#         self.currency = currency
-#         self.is_on_sale = is_on_sale
-#         self.before_price = before_price
-#         self.is_waiting = is_waiting
+class ParserResult:
+    def __init__(
+        self,
+        url,
+        price=0,
+        currency="UAH",
+        is_available=True,
+        is_on_sale=False,
+        before_price=0,
+    ):
+        self.url = url
+        self.price = price
+        self.currency = CURRENCIES_CONVERSION[currency]
+        self.is_available = is_available  # waiting / out of stock
+        self.is_on_sale = is_on_sale
+        self.before_price = before_price
+
+    def to_dict(self):
+        result = {
+            "url": self.url,
+            "price": self.price,
+            "currency": self.currency,
+            "is_available": self.is_available,
+            "is_on_sale": self.is_on_sale,
+            "before_price": self.before_price,
+        }
+        return result
+
+    # TODO
+    # Notes
+    # - може бути на знижці, з ціною і не доступне
+    # (https://www.citrus.ua/stiralnye-mashiny/stiralnaya-mashina-lg-f2r5ws0w-676002.html)
 
 
 @singleton
 class CitrusParser(CustomParser):
-    def get_price(self, link):
+    def parse(self, link):
         page = requests.get(link)
 
         soup = BeautifulSoup(page.content, "html.parser")
 
         b_price = soup.find("b", class_="buy-section__new-price")
         if not b_price:
-            print("No price was found")
-            return
+            return self.return_empty_result(link)
+            # print("No price was found")
+            # return
 
-        price, span_currency = b_price.children
+        raw_price, span_currency = b_price.children
 
-        result_price = float("".join(price.split()))
-        result_currency = span_currency.text
-
-        result = f"{result_price} {result_currency}"
-
-        if self.is_waiting(soup):
-            result += " - waiting"
-
+        price = float("".join(raw_price.split()))
+        currency = span_currency.text
+        is_available = self.is_available(soup)
         is_on_sale, before_price = self.check_on_sale(soup)
-        if is_on_sale:
-            result += f" - on sale (before - {before_price} {result_currency})"
+
+        result = ParserResult(
+            url=link,
+            price=price,
+            currency=currency,
+            is_available=is_available,
+            is_on_sale=is_on_sale,
+            before_price=before_price,
+        )
 
         return result
+
+    def is_available(self, soup):
+        is_waiting = self.is_waiting(soup)
+        return not bool(is_waiting)
 
     def is_waiting(self, soup):
         waiting = soup.find("p", class_="status--waiting")
@@ -67,7 +102,7 @@ class CitrusParser(CustomParser):
     def check_on_sale(self, soup):
         span_price = soup.find("span", "buy-section__old-price")
         if not span_price:
-            return False, None
+            return False, 0
 
         price_raw = span_price.contents[0]
         price = float("".join(price_raw.split()))
@@ -76,28 +111,33 @@ class CitrusParser(CustomParser):
 
 @singleton
 class AlloParser(CustomParser):
-    def get_price(self, link):
+    def parse(self, link):
         page = requests.get(link)
+        # if not page.ok:  # wrong url  #TODO - think about it (зараз як ніби все правильно встановлюють)
+        #     return None
 
         soup = BeautifulSoup(page.content, "html.parser")
 
         div_price = soup.find("div", class_="p-trade-price__current")
         if not div_price:
-            # чи це тільки кейс коли немає в наявності чи ще якісь
-            print("No price was found")
-            return
+            return self.return_empty_result(link)
+            # # чи це тільки кейс коли немає в наявності чи ще якісь
+            # print("No price was found")
+            # return
 
         price = float(div_price.find("meta", itemprop="price")["content"])
         currency = div_price.find("meta", itemprop="priceCurrency")["content"]
-
-        result = f"{price} {currency}"
-
-        if not self.is_available(soup):
-            result += " - doesn't available"
-
+        is_available = self.is_available(soup)
         is_on_sale, before_price = self.check_on_sale(soup)
-        if is_on_sale:
-            result += f" - on sale (before - {before_price} {currency})"
+
+        result = ParserResult(
+            url=link,
+            price=price,
+            currency=currency,
+            is_available=is_available,
+            is_on_sale=is_on_sale,
+            before_price=before_price,
+        )
 
         return result
 
@@ -133,7 +173,7 @@ def test_citrus():
         "https://www.citrus.ua/igrovye-pristavki/igrovaya-konsol-sony-playstation-5-663700.html",
     ]
     for link in links:
-        print(parser.get_price(link))
+        print(parser.parse(link))
 
 
 def test_allo():
@@ -144,13 +184,15 @@ def test_allo():
         "https://allo.ua/ru/igrovye-pristavki/konsol-playstation-5-digital-edition.html",
         "https://allo.ua/ru/igrovye-pristavki/igrovaya-konsol-playstation-5.html",
         "https://allo.ua/ru/products/mobile/xiaomi-redmi-note-9-pro-6-128gb-interstellar-grey.html",
+        # 404 page
+        # "https://allo.ua/ua/dasdasda222"
     ]
     for link in links:
-        print(parser.get_price(link))
+        print(parser.parse(link))
 
 
 if __name__ == "__main__":
-    test_citrus()
+    # test_citrus()
     test_allo()
 
 
