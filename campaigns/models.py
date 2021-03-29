@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from . import helpers
+
 
 # TODO
 # parsers - singleton ???
@@ -84,7 +86,7 @@ class Market(models.Model):
 
     @property
     def parser(self):
-        return
+        return helpers.get_market_parser(self)
 
 
 # TODO - (idea) - to track item's price протягом певного часу

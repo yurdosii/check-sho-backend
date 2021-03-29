@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 
 from abc import ABC, abstractmethod
 
+from .patterns import singleton
+
 # TODO
 # - return object - з полями типу "price", "is_waiting", "is_on_sale"
 # - dict to convert ("UAH" <-> "₴")
@@ -19,6 +21,18 @@ class CustomParser(ABC):
         f.close()
 
 
+# class ParserResult:
+#     def __init__(
+#         self, price, currency, is_on_sale=False, before_price=0, is_waiting=False
+#     ):
+#         self.price = price
+#         self.currency = currency
+#         self.is_on_sale = is_on_sale
+#         self.before_price = before_price
+#         self.is_waiting = is_waiting
+
+
+@singleton
 class CitrusParser(CustomParser):
     def get_price(self, link):
         page = requests.get(link)
@@ -60,6 +74,7 @@ class CitrusParser(CustomParser):
         return True, price
 
 
+@singleton
 class AlloParser(CustomParser):
     def get_price(self, link):
         page = requests.get(link)
@@ -137,3 +152,7 @@ def test_allo():
 if __name__ == "__main__":
     test_citrus()
     test_allo()
+
+
+# FOXTROT, ELDORADO
+# - protected by incapsula technology (зайди на них через інкогніто і там буде опис)
