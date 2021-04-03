@@ -16,7 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from checksho_bot import urls as checksho_bot_urls
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("checksho.api_routers", namespace="api")),
+    path("checksho_bot/", include(checksho_bot_urls)),
 ]

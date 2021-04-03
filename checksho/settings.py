@@ -43,11 +43,13 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "corsheaders",
     "rest_framework_serializer_extensions",
+    "django_tgbot",
 ]
 
 LOCAL_APPS = [
     "users.apps.UsersConfig",
     "campaigns.apps.CampaignsConfig",
+    "checksho_bot",
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
