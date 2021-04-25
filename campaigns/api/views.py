@@ -29,7 +29,7 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
         results = campaigns_helpers.run_endpoint_campaign(campaign)
 
         return Response(results)
-    
+
     @action(detail=True, methods=["post"])
     def test_email_campaign(self, request, **kwargs):
         campaign = self.get_object()
@@ -37,7 +37,7 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
             return Response(
                 {"error": "Campaign isn't active"}, status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         owner = campaign.owner
         if not owner or not owner.email:
             return Response(

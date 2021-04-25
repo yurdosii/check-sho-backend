@@ -32,7 +32,7 @@ class TelegramBot(AbstractTelegramBot):
 
 
 def import_processors():
-    from . import processors
+    from . import processors  # noqa: F401
 
 
 state_manager = StateManager()

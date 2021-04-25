@@ -107,6 +107,8 @@ class CampaignItem(models.Model):
     def telegram_format(self):
         is_active = EMOJI["YES"] if self.is_active else EMOJI["NO"]
 
+        # TODO - add name щоб був обов'язковий і шо
+        # TODO - типу якщо не встановлює то щоб автоматично підтягувати
         result = f"""
 _Url_: `{self.url}`
 *Active*: {is_active}
@@ -131,6 +133,7 @@ class Market(models.Model):
         return helpers.get_market_parser(self)
 
     def is_url_from_market(self, url):
+        # TODO - https://allo.ua/ - така штука проходить, а не мала б
         market_url_parsed = urlparse(self.url)
         item_url_parsed = urlparse(url)
 
