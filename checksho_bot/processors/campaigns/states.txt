@@ -1,0 +1,29 @@
+
+Campaign creation
+-> market
+-> title
+-> interval
+-> items
+    -> one by one
+        -> url
+        -> title
+            -> custom
+            -> from item page
+        #TODO (
+        -> check price
+            має пропарситись сторінка
+            дістатися price
+            і щоб юзер підтвердив що то саме те що він хотів
+        )
+        -> choice
+            -> add more items (again from '-> url')
+            -> finish
+    -> many at once
+        -> list of urls
+        -> choice
+            -> add more urls (again from '-> list of urls')
+            -> finish
+-> final choice
+    -> create (виведеться просто дані і людина вже клікає чи створювати чи не)
+    -> reset
+
