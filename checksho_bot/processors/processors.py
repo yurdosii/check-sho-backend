@@ -1,6 +1,6 @@
 from checksho_bot.bot import TelegramBot, state_manager
 from checksho_bot.models import TelegramState
-from checksho_bot.processors.campaigns.add_campaign import add_campaign
+from checksho_bot.processors import campaigns
 from django_tgbot.decorators import processor
 from django_tgbot.state_manager import message_types
 from django_tgbot.types.update import Update
@@ -9,9 +9,13 @@ from utils.telegram import telegram_command
 from campaigns.models import Campaign
 
 BOT_AVAILABLE_COMMANDS = {  # 'command': 'state name'
+    "/campaigns": {
+        "description": "List available campaigns",
+        "function": lambda *args, **kwargs: campaigns.list_campaigns.list_campaigns(*args, **kwargs),
+    },
     "/addcampaign": {
         "description": "Add new campaign",
-        "function": lambda *args, **kwargs: add_campaign(*args, **kwargs),
+        "function": lambda *args, **kwargs: campaigns.add_campaign.add_campaign(*args, **kwargs),
     },
     "/status": {
         "description": "Run active campaigns",
