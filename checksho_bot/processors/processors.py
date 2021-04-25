@@ -13,6 +13,11 @@ BOT_AVAILABLE_COMMANDS = {  # 'command': 'state name'
         "description": "Add new campaign",
         "function": lambda *args, **kwargs: add_campaign(*args, **kwargs),
     },
+    "/status": {
+        "description": "Run active campaigns",
+        "function": lambda *args, **kwargs: check_status(*args, **kwargs),
+    }
+    # run selected command
 }
 
 
@@ -46,3 +51,17 @@ def handle_wrong_command(chat_id: str, bot: TelegramBot, state: TelegramState):
 
     bot.sendMessage(chat_id, text)
     state.set_name("")
+
+
+@telegram_command
+def check_status(bot: TelegramBot, update: Update, state: TelegramState):
+    chat_id = update.get_chat().get_id()
+
+    text = "Running campaign"
+    message = bot.sendMessage(chat_id, text)
+
+    for _ in range(3):
+        text += "."
+        bot.editMessageText(text, chat_id, message.message_id)
+
+    bot.editMessageText("Result: ", chat_id, message.message_id)
