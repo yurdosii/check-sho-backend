@@ -2,20 +2,23 @@ from checksho_bot.bot import TelegramBot, state_manager
 from checksho_bot.models import TelegramState
 from checksho_bot.processors import campaigns
 from django_tgbot.decorators import processor
-from django_tgbot.state_manager import message_types
+from django_tgbot.state_manager import message_types, update_types
 from django_tgbot.types.update import Update
 from utils.telegram import telegram_command
 
-from campaigns.models import Campaign
-
+# TODO - Reset button in /addcampaign, /editcampaign, ...  (commands with a lot of steps)
 BOT_AVAILABLE_COMMANDS = {  # 'command': 'state name'
     "/campaigns": {
         "description": "List available campaigns",
-        "function": lambda *args, **kwargs: campaigns.list_campaigns.list_campaigns(*args, **kwargs),
+        "function": lambda *args, **kwargs: campaigns.list_campaigns.list_campaigns(
+            *args, **kwargs
+        ),
     },
     "/addcampaign": {
         "description": "Add new campaign",
-        "function": lambda *args, **kwargs: campaigns.add_campaign.add_campaign(*args, **kwargs),
+        "function": lambda *args, **kwargs: campaigns.add_campaign.add_campaign(
+            *args, **kwargs
+        ),
     },
     "/status": {
         "description": "Run active campaigns",
@@ -23,6 +26,9 @@ BOT_AVAILABLE_COMMANDS = {  # 'command': 'state name'
     }
     # run selected command
 }
+
+# https://django-tgbot.readthedocs.io/en/latest/processors/ - 'update_types'
+state_manager.set_default_update_types(update_types.Message)
 
 
 @processor(state_manager, message_types=[message_types.Text])

@@ -8,7 +8,7 @@ from campaigns.models import Campaign
 
 @telegram_command
 def list_campaigns(bot: TelegramBot, update: Update, state: TelegramState):
-    # TODO - той слайдер це кароче через колбеки кнопки, прикольно
+    # TODO - той слайдер це кароче через колбеки кнопки, прикольно (через InlineKeyboardButton)
 
     # TODO - треба тут слайдер той (походу ті музики це просто кнопки stacked якось, але хз точно)
     # TODO - URL зробити як URL як link, а не як зараз і тоді гарніше буде
