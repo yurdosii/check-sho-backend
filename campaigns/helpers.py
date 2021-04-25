@@ -78,6 +78,30 @@ def get_campaign_results(campaign):
     return campaign_results
 
 
+def create_campaign_from_telegram(data: str, owner=None):
+    from campaigns.models import Campaign, CampaignItem, Market
+
+    # TODO - add owner
+    market_title = data.get("market_title")
+    market = Market.objects.get(title=market_title)
+
+    title = data.get("title")
+    interval = data.get("interval")
+    items = data.get("items")
+
+    campaign = Campaign(title=title, market=market, interval=interval, is_active=True)
+    campaign.save()
+
+    for item in items:
+        url = item.get("url")
+        title = item.get("title")
+        campaign_item = CampaignItem(
+            campaign=campaign, url=url, title=title, is_active=True
+        )
+        campaign_item.save()
+    return campaign
+
+
 # # TODO - think about it
 # def run_email_campaign(campaign):
 #     pass

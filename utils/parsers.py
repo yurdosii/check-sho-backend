@@ -113,7 +113,8 @@ class CitrusParser(CustomParser):
 class AlloParser(CustomParser):
     def parse(self, link):
         page = requests.get(link)
-        # if not page.ok:  # wrong url  #TODO - think about it (зараз як ніби все правильно встановлюють)
+        # TODO - think about it (зараз як ніби все правильно встановлюють)
+        # if not page.ok:  # wrong url
         #     return None
 
         soup = BeautifulSoup(page.content, "html.parser")
@@ -164,10 +165,22 @@ def test_citrus():
     parser = CitrusParser()
 
     links = [
-        "https://www.citrus.ua/aksessuary-dlya-gejminga/geympad-dualsense-dlya-sony-ps5-664502.html",
-        "https://www.citrus.ua/games/disk-xbox-star-wars-squadrons-blu-ray-english-version-674048.html",
-        "https://www.citrus.ua/aksessuary-dlya-naushnikov/chekhol-dlya-apple-airpods-star-wars-stormtrooper-654245.html",
-        "https://www.citrus.ua/games/disk-xbox-one-star-wars-fallen-order-blu-ray-russian-subtitles-657026.html",
+        (
+            "https://www.citrus.ua/aksessuary-dlya-gejminga/geympad-dualsense-"
+            "dlya-sony-ps5-664502.html"
+        ),
+        (
+            "https://www.citrus.ua/games/disk-xbox-star-wars-squadrons-blu-ray-"
+            "english-version-674048.html"
+        ),
+        (
+            "https://www.citrus.ua/aksessuary-dlya-naushnikov/chekhol-dlya-apple-"
+            "airpods-star-wars-stormtrooper-654245.html"
+        ),
+        (
+            "https://www.citrus.ua/games/disk-xbox-one-star-wars-fallen-order-blu-"
+            "ray-russian-subtitles-657026.html"
+        ),
         "https://www.citrus.ua/electroscooters/elektrosamokat-likebike-one-black-637102.html",
         # PS5 (предзаказ)
         "https://www.citrus.ua/igrovye-pristavki/igrovaya-konsol-sony-playstation-5-663700.html",
@@ -180,7 +193,10 @@ def test_allo():
     parser = AlloParser()
 
     links = [
-        "https://allo.ua/ru/igrovye-pristavki/microsoft-xbox-one-s-1tb-white-gta-5-rasshirennaja-garantija-18-mesjacev.html",
+        (
+            "https://allo.ua/ru/igrovye-pristavki/microsoft-xbox-one-s-"
+            "1tb-white-gta-5-rasshirennaja-garantija-18-mesjacev.html"
+        ),
         "https://allo.ua/ru/igrovye-pristavki/konsol-playstation-5-digital-edition.html",
         "https://allo.ua/ru/igrovye-pristavki/igrovaya-konsol-playstation-5.html",
         "https://allo.ua/ru/products/mobile/xiaomi-redmi-note-9-pro-6-128gb-interstellar-grey.html",

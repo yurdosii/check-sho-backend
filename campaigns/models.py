@@ -1,7 +1,18 @@
+from enum import Enum
+from urllib.parse import urlparse
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from utils.telegram import EMOJI
+
 from . import helpers
+
+
+class CampaignInterval(Enum):
+    HOUR = "Every hour"
+    DAY = "Every day"
+    WEEK = "Every week"
 
 
 # TODO
@@ -46,6 +57,26 @@ class Campaign(models.Model):
     def __str__(self):
         return f"Campaign: {self.title} by {self.owner}"
 
+    @property
+    def telegram_format(self):
+        is_active = EMOJI["YES"] if self.is_active else EMOJI["NO"]
+
+        result = f"""
+*Campaign*: {self.title}
+*Active*: {is_active}
+        """
+
+        items = [item.telegram_format for item in self.campaign_items.all()]
+        # result_items = "\n".join(items)
+        result_items = "".join(items)
+        if items:
+            result += f"""\n\nItems:\n{result_items}
+            """
+        else:
+            result += "Items: 0"
+
+        return result
+
 
 # TODO (подумай) - різні налаштування CampaignItem, типу - "check price", "перевіряти наявність"
 class CampaignItem(models.Model):
@@ -72,6 +103,18 @@ class CampaignItem(models.Model):
     def __str__(self):
         return f"CampaignItem: {self.title} - {self.url}"
 
+    @property
+    def telegram_format(self):
+        is_active = EMOJI["YES"] if self.is_active else EMOJI["NO"]
+
+        # TODO - add name щоб був обов'язковий і шо
+        # TODO - типу якщо не встановлює то щоб автоматично підтягувати
+        result = f"""
+_Url_: `{self.url}`
+*Active*: {is_active}
+        """
+        return result
+
     # TODO - - validation by market url - думаю не
 
 
@@ -88,6 +131,13 @@ class Market(models.Model):
     @property
     def parser(self):
         return helpers.get_market_parser(self)
+
+    def is_url_from_market(self, url):
+        # TODO - https://allo.ua/ - така штука проходить, а не мала б
+        market_url_parsed = urlparse(self.url)
+        item_url_parsed = urlparse(url)
+
+        return market_url_parsed.netloc == item_url_parsed.netloc
 
 
 # TODO - (idea) - to track item's price протягом певного часу

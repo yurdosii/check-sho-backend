@@ -14,8 +14,8 @@ def handle_bot_request(request):
     All of the processing will happen in this part. It is wrapped in try-except block
     to make sure the returned HTTP status is 200. Otherwise, if your processors raise Exceptions
     causing this function to raise Exception and not return 200 status code, Telegram will stop
-    sending updates to your webhook after a few tries. Instead, take the caught exception and handle it
-    or log it to use for debugging later.
+    sending updates to your webhook after a few tries. Instead, take the caught exception and
+    handle it or log it to use for debugging later.
     """
     try:
         bot.handle_update(update)
@@ -29,7 +29,8 @@ def handle_bot_request(request):
 
 def poll_updates(request):
     """
-    Polls all waiting updates from the server. Note that webhook should not be set if polling is used.
+    Polls all waiting updates from the server. Note that webhook should not be set if
+    polling is used.
     You can delete the webhook by passing an empty URL as the address.
     """
     count = bot.poll_updates_and_handle()
