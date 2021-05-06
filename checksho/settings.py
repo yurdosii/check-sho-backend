@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,10 +39,17 @@ DEFAULT_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
 ]
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "rest_framework.authtoken",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     "corsheaders",
     "rest_framework_serializer_extensions",
     "django_tgbot",
@@ -58,6 +67,10 @@ INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # AUTH
 
 AUTH_USER_MODEL = "users.User"
+
+# SITE
+
+SITE_ID = 1
 
 
 # MIDDLEWARE
@@ -183,3 +196,31 @@ DEFAULT_FROM_EMAIL = "CheckSho diploma <diploma.yurii@gmail.com>"
 EMAIL_USE_TLS = True
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
+
+
+# Authentication - jwt
+# https://github.com/jazzband/django-rest-framework-simplejwt
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    )
+}
+
+# https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+}
+
+# Authentication - dj-rest-auth
+# https://github.com/iMerica/dj-rest-auth
+REST_USE_JWT = True
+
+# https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
+REST_AUTH_SERIALIZERS = {
+    "JWT_SERIALIZER": "dj_rest_auth.serializers.JWTSerializer",
+    "USER_DETAILS_SERIALIZER": "users.api.serializers.UserSerializer",
+}
