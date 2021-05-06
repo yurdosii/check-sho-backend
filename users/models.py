@@ -1,5 +1,10 @@
+from collections import defaultdict
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+from campaigns.models import Market
+from checksho_bot.models import TelegramUser
 
 
 class User(AbstractUser):
@@ -10,6 +15,9 @@ class User(AbstractUser):
         (USER, "USER"),
     )
     role = models.CharField(max_length=20, choices=CUSTOM_ROLE_CHOICES, db_index=True)
+    telegram_user = models.OneToOneField(
+        TelegramUser, on_delete=models.SET_NULL, blank=True, null=True
+    )
 
     # TODO
     # send_email = boolean  # чи відправляти на пошту
