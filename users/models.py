@@ -26,3 +26,34 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    @property
+    def profile_statistics(self):
+        # markets: {"market_name": "number of campaigns by market"}
+        # number of campaigns: int
+        # number of items: int
+
+        campaigns = self.campaigns.select_related("market").prefetch_related("campaign_items")
+
+        # markets
+        markets_titles = list(map(lambda market: market.title, Market.objects.all()))
+        campaigns_by_market = dict.fromkeys(markets_titles, 0)
+        for campaign in campaigns:
+            campaigns_by_market[campaign.market.title] += 1
+        
+        # campaigns number
+        campaigns_number = len(campaigns)
+
+        # items number
+        items_number = sum(map(
+            lambda campaign: campaign.campaign_items.count(), campaigns
+        ))
+
+        # result
+        result = {
+            "markets": campaigns_by_market,
+            "campaigns_number": campaigns_number,
+            "items_number": items_number,
+        }
+
+        return result
