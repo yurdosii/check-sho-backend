@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from users.models import User
 from utils.emails import send_email_message
 
@@ -12,6 +12,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = "pk"
+    permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=["get"])
     def test_email(self, request):

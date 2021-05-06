@@ -2,12 +2,15 @@ import logging
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_serializer_extensions.views import SerializerExtensionsAPIViewMixin
+from rest_framework_serializer_extensions.views import \
+    SerializerExtensionsAPIViewMixin
 
 from .. import helpers as campaigns_helpers
 from .. import models as campaigns_models
 from . import serializers as campaigns_serializers
+
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +19,7 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
     queryset = campaigns_models.Campaign.objects.all()
     serializer_class = campaigns_serializers.CampaignSerializer
     lookup_field = "pk"
+    permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=["post"])
     def run_campaign(self, request, **kwargs):
@@ -53,6 +57,7 @@ class MarketViewSet(viewsets.ModelViewSet):
     queryset = campaigns_models.Market.objects.all()
     serializer_class = campaigns_serializers.MarketSerializer
     lookup_field = "pk"
+    permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         logger.info("Yura")
@@ -64,6 +69,7 @@ class CampaignItemViewSet(viewsets.ModelViewSet):
     queryset = campaigns_models.CampaignItem.objects.all()
     serializer_class = campaigns_serializers.CampaignItemSerializers
     lookup_field = "pk"
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return campaigns_models.CampaignItem.objects.filter(

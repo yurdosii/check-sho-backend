@@ -1,8 +1,10 @@
+from django.conf.urls import include
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested.routers import NestedDefaultRouter
 
-from users.api import views as users_views
 from campaigns.api import views as campaigns_views
+from users.api import views as users_views
 
 
 router = DefaultRouter()
@@ -20,7 +22,11 @@ campaigns_router.register(
     basename="campaign-campaign_items",
 )
 
-urlpatterns = []
+urlpatterns = [
+    # Authentication endpoints (Login, Logout, Register, Password change, ... )
+    path("auth/", include("dj_rest_auth.urls")),
+    path("auth/registration/", include("dj_rest_auth.registration.urls")),
+]
 urlpatterns += router.urls
 urlpatterns += campaigns_router.urls
 
