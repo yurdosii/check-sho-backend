@@ -32,6 +32,7 @@ class Campaign(models.Model):
     )
     owner = models.ForeignKey(
         "users.User",
+        related_name="campaigns",
         on_delete=models.SET_NULL,  # TODO - think about it later
         blank=True,
         null=True,
@@ -119,7 +120,7 @@ _Url_: `{self.url}`
 
 
 class Market(models.Model):
-    title = models.CharField(_("Title"), max_length=1024)
+    title = models.CharField(_("Title"), max_length=1024, unique=True)
     url = models.URLField(max_length=255)
 
     created_at = models.DateTimeField(auto_now_add=True)

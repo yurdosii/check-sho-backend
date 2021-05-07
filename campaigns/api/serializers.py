@@ -1,7 +1,6 @@
+from campaigns import models as campaigns_models
 from rest_framework import serializers
 from rest_framework_serializer_extensions.serializers import SerializerExtensionsMixin
-
-from campaigns import models as campaigns_models
 
 
 class CampaignItemSerializers(serializers.ModelSerializer):
@@ -13,12 +12,17 @@ class CampaignItemSerializers(serializers.ModelSerializer):
 
 
 class CampaignSerializer(SerializerExtensionsMixin, serializers.ModelSerializer):
+    market = serializers.SlugRelatedField(
+        queryset=campaigns_models.Market.objects.all(), slug_field="title"
+    )
+
     class Meta:
         model = campaigns_models.Campaign
         exclude = []
         expandable_fields = dict(
-            campaign_items=dict(
+            items=dict(
                 serializer="campaigns.api.serializers.CampaignItemSerializers",
+                source="campaign_items",
                 many=True,
             ),
             market_details=dict(
