@@ -14,12 +14,14 @@ dj-rest-auth==2.1.4
 Django==3.1.7
 django-allauth==0.44.0
 django-cors-headers==3.7.0
+django-environ==0.4.5
 django-extensions==3.1.3
 django-tgbot==1.4.9.2
 djangorestframework==3.12.4
 djangorestframework-serializer-extensions==2.0.1
 djangorestframework-simplejwt==4.6.0
 drf-nested-routers==0.93.3
+environ==1.0
 flake8==3.9.0
 flake8-isort==4.0.0
 hashids==1.3.1
@@ -33,11 +35,11 @@ oauthlib==3.1.0
 packaging==20.9
 pathspec==0.8.1
 pluggy==0.13.1
+psycopg2==2.8.6
 py==1.10.0
 pycodestyle==2.7.0
 pycparser==2.20
 pyflakes==2.3.1
-pygraphviz==1.7
 PyJWT==2.1.0
 pyparsing==2.4.7
 pytest==6.2.4

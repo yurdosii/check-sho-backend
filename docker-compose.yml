@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+
+    postgres:
+        image: postgres
+        env_file: .envs/.postgres
+        ports:
+            - 5432:5432
+        volumes:
+            - ./data/postgres:/var/lib/postgresql/data
+
+    api:
+        build: .
+        env_file: .envs/.django
+        command: python manage.py runserver 0.0.0.0:8000
+        volumes:
+            - .:/code
+        ports:
+            - 8000:8000
+        depends_on:
+            - postgres
+
+    start_dependencies:
+        image: dadarek/wait-for-dependencies
+        depends_on:
+            - postgres
+        command: postgres:5432
+
+
+# chmod +x docker-entrypoint.sh 
+# sudo chown -R $USER ./data/postgres/
+# put data in .dockerignore ("can't stat" error will be)
+
+# docker-compose build
+# docker-compose run start_dependencies
+# docker-compose run --service-ports --rm api
