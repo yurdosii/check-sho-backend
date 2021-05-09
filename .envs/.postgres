@@ -1,7 +1,7 @@
 # PostgreSQL
 
-POSTGRES_HOST=postgres
-POSTGRES_PORT=5432
-POSTGRES_DB=checksho
-POSTGRES_USER=checksho_user
-POSTGRES_PASSWORD=checksho_password
+POSTGRES_HOST = postgres
+POSTGRES_PORT = 5432
+POSTGRES_DB = checksho
+POSTGRES_USER = checksho_user
+POSTGRES_PASSWORD = checksho_password

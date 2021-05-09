@@ -35,3 +35,5 @@ services:
 # docker-compose build
 # docker-compose run start_dependencies
 # docker-compose run --service-ports --rm api
+
+# sudo service postgresql stop
