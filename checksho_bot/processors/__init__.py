@@ -1,1 +1,1 @@
-from . import campaigns, processors  # noqa: F401
+from . import processors, campaigns  # noqa: F401

@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -31,23 +33,21 @@ class User(AbstractUser):
         # number of campaigns: int
         # number of items: int
 
-        campaigns = self.campaigns.select_related("market").prefetch_related(
-            "campaign_items"
-        )
+        campaigns = self.campaigns.select_related("market").prefetch_related("campaign_items")
 
         # markets
         markets_titles = list(map(lambda market: market.title, Market.objects.all()))
         campaigns_by_market = dict.fromkeys(markets_titles, 0)
         for campaign in campaigns:
             campaigns_by_market[campaign.market.title] += 1
-
+        
         # campaigns number
         campaigns_number = len(campaigns)
 
         # items number
-        items_number = sum(
-            map(lambda campaign: campaign.campaign_items.count(), campaigns)
-        )
+        items_number = sum(map(
+            lambda campaign: campaign.campaign_items.count(), campaigns
+        ))
 
         # result
         result = {

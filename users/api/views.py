@@ -2,7 +2,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_serializer_extensions.views import SerializerExtensionsAPIViewMixin
+from rest_framework_serializer_extensions.views import \
+    SerializerExtensionsAPIViewMixin
 
 from users.models import User
 from utils.emails import send_email_message
