@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from multiselectfield import MultiSelectField
 
 from utils.telegram import EMOJI
 
@@ -15,8 +16,9 @@ class CampaignInterval(Enum):
     WEEK = "Every week"
 
 
-# TODO
-# parsers - singleton ???
+class CampaignItemType(Enum):
+    CHECK_PRICE = "Check price"
+    CHECK_SALE = "Check sale"
 
 
 class Campaign(models.Model):
@@ -51,7 +53,11 @@ class Campaign(models.Model):
     )
 
     is_active = models.BooleanField(default=False)
+    is_telegram_campaign = models.BooleanField(default=False)
+    is_email_campaign = models.BooleanField(default=False)
 
+    last_run = models.DateTimeField(blank=True, null=True)
+    next_run = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -97,6 +103,13 @@ class CampaignItem(models.Model):
     )
 
     is_active = models.BooleanField(default=False)
+
+    types = MultiSelectField(
+        max_length=50,
+        choices=[[type.name, type.value] for type in CampaignItemType],
+        blank=True,
+        null=True,
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
