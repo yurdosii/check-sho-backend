@@ -1,7 +1,6 @@
+from campaigns import models as campaigns_models
 from rest_framework import serializers
 from rest_framework_serializer_extensions.serializers import SerializerExtensionsMixin
-
-from campaigns import models as campaigns_models
 
 
 class CampaignItemSerializers(serializers.ModelSerializer):

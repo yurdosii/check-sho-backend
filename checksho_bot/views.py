@@ -1,11 +1,10 @@
-import logging
-
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from .bot import bot
 from django_tgbot.types.update import Update
 
-from .bot import bot
+import logging
 
 
 @csrf_exempt

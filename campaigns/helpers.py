@@ -1,8 +1,8 @@
 import logging
 
-from templates.emails import CAMPAIGN_ITEM_TEMPLATE, CAMPAIGN_TEMPLATE
-from utils.emails import send_email_message
+from templates.emails import CAMPAIGN_TEMPLATE, CAMPAIGN_ITEM_TEMPLATE
 from utils.parsers import *  # noqa: F401, F403
+from utils.emails import send_email_message
 
 
 def get_market_parser(market):

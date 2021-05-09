@@ -1,9 +1,8 @@
 from django_tgbot.bot import AbstractTelegramBot
 from django_tgbot.state_manager.state_manager import StateManager
 from django_tgbot.types.update import Update
-
 from . import bot_token
-from .models import TelegramChat, TelegramState, TelegramUser
+from .models import TelegramUser, TelegramChat, TelegramState
 
 
 class TelegramBot(AbstractTelegramBot):

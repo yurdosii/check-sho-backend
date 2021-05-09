@@ -1,11 +1,10 @@
-from abc import ABC, abstractmethod
-
 import requests
 from bs4 import BeautifulSoup
 
+from abc import ABC, abstractmethod
+
 from .constants import CURRENCIES_CONVERSION
 from .patterns import singleton
-
 
 # TODO
 # - return object - з полями типу "price", "is_waiting", "is_on_sale"
