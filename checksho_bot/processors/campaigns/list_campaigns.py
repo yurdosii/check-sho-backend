@@ -1,9 +1,9 @@
-from checksho_bot.bot import TelegramBot
-from checksho_bot.models import TelegramState
 from django_tgbot.types.update import Update
-from utils.telegram import telegram_command
 
 from campaigns.models import Campaign
+from checksho_bot.bot import TelegramBot
+from checksho_bot.models import TelegramState
+from utils.telegram import telegram_command
 
 
 @telegram_command

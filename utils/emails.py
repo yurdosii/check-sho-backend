@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
+
 # TODO - html response in email (щоб гарно було, може якусь табличку)
 
 
