@@ -7,11 +7,6 @@ from .constants import CURRENCIES_CONVERSION
 from .patterns import singleton
 
 
-# TODO
-# - return object - з полями типу "price", "is_waiting", "is_on_sale"
-# - dict to convert ("UAH" <-> "₴")
-
-
 class CustomParser(ABC):
     @abstractmethod
     def parse(self, link: str):
@@ -19,6 +14,10 @@ class CustomParser(ABC):
 
     def return_empty_result(self, url: str):
         result = ParserResult(url=url, is_available=False)
+        return result
+
+    def return_wrong_url_result(self, url: str):
+        result = ParserResult(url=url, is_available=False, is_wrong_url=True)
         return result
 
     def write_to_file(data):
@@ -36,6 +35,7 @@ class ParserResult:
         is_available=True,
         is_on_sale=False,
         before_price=0,
+        is_wrong_url=False,
     ):
         self.url = url
         self.price = price
@@ -43,6 +43,7 @@ class ParserResult:
         self.is_available = is_available  # waiting / out of stock
         self.is_on_sale = is_on_sale
         self.before_price = before_price
+        self.is_wrong_url = is_wrong_url
 
     def to_dict(self):
         result = {
@@ -52,8 +53,12 @@ class ParserResult:
             "is_available": self.is_available,
             "is_on_sale": self.is_on_sale,
             "before_price": self.before_price,
+            "is_wrong_url": self.is_wrong_url,
         }
         return result
+
+    def __str__(self):
+        return str(self.to_dict())
 
     # TODO
     # Notes
@@ -65,14 +70,14 @@ class ParserResult:
 class CitrusParser(CustomParser):
     def parse(self, link):
         page = requests.get(link)
+        if not page.ok:
+            return self.return_wrong_url_result(link)
 
         soup = BeautifulSoup(page.content, "html.parser")
 
         b_price = soup.find("b", class_="buy-section__new-price")
         if not b_price:
             return self.return_empty_result(link)
-            # print("No price was found")
-            # return
 
         raw_price, span_currency = b_price.children
 
@@ -114,6 +119,8 @@ class CitrusParser(CustomParser):
 class AlloParser(CustomParser):
     def parse(self, link):
         page = requests.get(link)
+        if not page.ok:
+            return self.return_wrong_url_result(link)
         # TODO - think about it (зараз як ніби все правильно встановлюють)
         # if not page.ok:  # wrong url
         #     return None
@@ -159,6 +166,47 @@ class AlloParser(CustomParser):
         *price_components, currency = div_price.find(class_="sum").text.split()
 
         price = float("".join(price_components))
+        return True, price
+
+
+@singleton
+class EpicentrParser(CustomParser):
+    def parse(self, link):
+        page = requests.get(link)
+        if not page.ok:
+            return self.return_wrong_url_result(link)
+
+        soup = BeautifulSoup(page.content, "html.parser")
+
+        div_price = soup.find("div", class_="p-price__main")
+        if not div_price:
+            return self.return_empty_result(link)
+
+        raw_price = div_price.text.strip()
+        price = float("".join(raw_price.split()))
+
+        currency = div_price.get_attribute_list("data-text")[0][0]
+
+        is_available = True
+        is_on_sale, before_price = self.check_on_sale(soup)
+
+        result = ParserResult(
+            url=link,
+            price=price,
+            currency=currency,
+            is_available=is_available,
+            is_on_sale=is_on_sale,
+            before_price=before_price,
+        )
+
+        return result
+
+    def check_on_sale(self, soup):
+        span_price = soup.find("span", "p-price__old-sum")
+        if not span_price:
+            return False, 0
+
+        price = float(span_price.text.strip())
         return True, price
 
 
@@ -208,9 +256,32 @@ def test_allo():
         print(parser.parse(link))
 
 
+def test_epicentr():
+    parser = EpicentrParser()
+
+    links = [
+        # int price
+        "https://epicentrk.ua/ua/shop/batut-maxxpro-tr48-b.html",
+        # sale
+        "https://epicentrk.ua/ua/shop/nabor-kastryul-6-predmetov-up-underprice.html",
+        # float price
+        "https://epicentrk.ua/ua/shop/gorka-doloni-bolshaya-golubovato-seraya-014550-15.html",
+        # not available
+        (
+            "https://epicentrk.ua/ua/shop/mplc-mikrofon-sennheiser-xs-1-cordial-cim-5-fm"
+            "-cable-1eb7cd65-1757-6b96-8667-97bf9c66ef6b.html"
+        ),
+        # 404 page
+        "https://epicentrk.ua/32131/",
+    ]
+    for link in links:
+        print(parser.parse(link))
+
+
 if __name__ == "__main__":
     # test_citrus()
-    test_allo()
+    # test_allo()
+    test_epicentr()
 
 
 # FOXTROT, ELDORADO
