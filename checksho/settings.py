@@ -58,6 +58,8 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "rest_framework_serializer_extensions",
     "django_tgbot",
+    "multiselectfield",
+    "django_celery_beat",
 ]
 
 LOCAL_APPS = [
@@ -166,7 +168,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Europe/Kiev"
 
 USE_I18N = True
 
@@ -243,3 +245,28 @@ REST_AUTH_SERIALIZERS = {
     "JWT_SERIALIZER": "dj_rest_auth.serializers.JWTSerializer",
     "USER_DETAILS_SERIALIZER": "users.api.serializers.UserSerializer",
 }
+
+# Celery
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+# TODO: set to whatever value is adequate in your circumstances
+CELERY_TASK_TIME_LIMIT = 5 * 60
+# TODO: set to whatever value is adequate in your circumstances
+CELERY_TASK_SOFT_TIME_LIMIT = 60
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+
+# Locally
+# TODO - toggle this to check how celery works
+# (if I remove this, tasks will be done in celery worker, now it is locally)
+# (when is True, WORKER - do nothing, BEAT - scheduler and worker)
+# (when is False, WORKER - do tasks, BEAT - is scheduler and send tasks to worker)
+CELERY_TASK_ALWAYS_EAGER = (
+    True  # tasks will be executed locally, instead of sent to the queue
+)
+CELERY_TASK_EAGER_PROPAGATES = True  # tasks called by .apply() will do exception
