@@ -1,2 +1,22 @@
+# General
+# ------------------------------------------------------------------------------
+USE_DOCKER=yes
+IPYTHONDIR=/app/.ipython
+
 # DB
+# ------------------------------------------------------------------------------
 DATABASE_URL=postgres://checksho_user:checksho_password@postgres:5432/checksho
+
+# Celery
+# ------------------------------------------------------------------------------
+# redis instead localhost
+CELERY_BROKER_URL=redis://redis:6379/0
+
+
+
+
+
+
+# This is if I would want to deploy I guess (from cookiecutter-django)
+#CELERY_FLOWER_USER=flower_user
+#CELERY_FLOWER_PASSWORD=flower_password

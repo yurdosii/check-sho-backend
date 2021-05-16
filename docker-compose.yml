@@ -25,15 +25,79 @@ services:
         image: dadarek/wait-for-dependencies
         depends_on:
             - postgres
-        command: postgres:5432
+            - redis
+        command: postgres:5432 redis:6379
+
+    redis:
+        image: redis
+        command: redis-server --appendonly yes
+        ports:
+            - 6379:6379
+        volumes:
+            - ./data/redis:/data
+
+    celery_worker:
+        build: .
+        env_file: .envs/.django
+        entrypoint: ''  # without this, docker-entrypoint (with migrate) will be run
+        command: celery worker -A checksho.celery_app -l INFO
+        volumes:
+            - .:/code
+        depends_on: 
+            - redis
+            - postgres
+            # - api - with this I am unable to run api and celery_worket simultaneously
+
+    celery_beat:
+        build: .
+        env_file: .envs//.django
+        entrypoint: ''
+        command: celery beat -A checksho.celery_app -l INFO
+        volumes:
+            - .:/code
+        depends_on: 
+            - redis
+            - postgres
+
+    celery_flower:
+        build: .
+        env_file: .envs/.django
+        entrypoint: '' # without this, docker-entrypoint (with migrate) will be run
+        ports:
+            - 5555:5555
+        command: celery flower --app=checksho.celery_app --address=0.0.0.0 --port=5555
+        volumes:
+            - .:/code
 
 
+
+# Configuration
+# ------------------------------------------------------------------------------
 # chmod +x docker-entrypoint.sh 
 # sudo chown -R $USER ./data/postgres/
 # put data in .dockerignore ("can't stat" error will be)
 
+# API
+# ------------------------------------------------------------------------------
 # docker-compose build
 # docker-compose run start_dependencies
 # docker-compose run --service-ports --rm api
 
-# sudo service postgresql stop
+# CELERY
+# ------------------------------------------------------------------------------
+# docker-compose run celery_worker
+# docker-compose run celery_beat
+# docker-compose run --service-ports celery_flower
+# (--service-ports allow to connect from my browser by "0.0.0.0:5555")
+
+# WORKER - where celery task will be executed
+# BEAT - where periodic task is controlled and sent to worker to be executed
+# FLOWER - UI to see tasks (only see tasks done in WORKER)
+
+# note: if CELERY_TASK_ALWAYS_EAGER=True is set, BEAT also executes tasks, so
+# in that case BEAT is sending periodic tasks to itself and then it executes them
+
+
+# PostgreSQL and Redis config
+# ------------------------------------------------------------------------------
+# sudo service postgresql stop 

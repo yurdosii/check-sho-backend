@@ -8,6 +8,7 @@ from rest_framework_serializer_extensions.views import SerializerExtensionsAPIVi
 
 from .. import helpers as campaigns_helpers
 from .. import models as campaigns_models
+from .. import tasks as campaings_tasks
 from . import serializers as campaigns_serializers
 
 
@@ -30,6 +31,7 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
             )
 
         results = campaigns_helpers.run_endpoint_campaign(campaign)
+        campaings_tasks.debug_task.delay()
 
         return Response(results)
 
