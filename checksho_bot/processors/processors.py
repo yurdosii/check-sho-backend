@@ -1,10 +1,12 @@
+from django_tgbot.decorators import processor
+from django_tgbot.state_manager import message_types, state_types, update_types
+from django_tgbot.types.update import Update
+
 from checksho_bot.bot import TelegramBot, state_manager
 from checksho_bot.models import TelegramState
 from checksho_bot.processors import campaigns
-from django_tgbot.decorators import processor
-from django_tgbot.state_manager import message_types, update_types
-from django_tgbot.types.update import Update
 from utils.telegram import telegram_command
+
 
 # TODO - Reset button in /addcampaign, /editcampaign, ...  (commands with a lot of steps)
 BOT_AVAILABLE_COMMANDS = {  # 'command': 'state name'
@@ -17,6 +19,12 @@ BOT_AVAILABLE_COMMANDS = {  # 'command': 'state name'
     "/addcampaign": {
         "description": "Add new campaign",
         "function": lambda *args, **kwargs: campaigns.add_campaign.add_campaign(
+            *args, **kwargs
+        ),
+    },
+    "/deletecampaign": {
+        "description": "Delete campaign",
+        "function": lambda *args, **kwargs: campaigns.delete_campaign.delete_campaign(
             *args, **kwargs
         ),
     },
