@@ -3,8 +3,16 @@ from abc import ABC, abstractmethod
 import requests
 from bs4 import BeautifulSoup
 
-from .constants import CURRENCIES_CONVERSION
 from .patterns import singleton
+
+
+CURRENCIES_CONVERSION = {
+    "₴": "UAH",
+    "UAH": "UAH",
+    "$": "USD",
+    "USD": "USD",  # dollar
+    "EUR": "EUR",  # euro
+}
 
 
 class CustomParser(ABC):
@@ -30,29 +38,32 @@ class ParserResult:
     def __init__(
         self,
         url,
+        title=None,
         price=0,
         currency="UAH",
         is_available=True,
         is_on_sale=False,
-        before_price=0,
+        price_before=0,
         is_wrong_url=False,
     ):
         self.url = url
+        self.title = title
         self.price = price
         self.currency = CURRENCIES_CONVERSION[currency]
         self.is_available = is_available  # waiting / out of stock
         self.is_on_sale = is_on_sale
-        self.before_price = before_price
+        self.price_before = price_before
         self.is_wrong_url = is_wrong_url
 
     def to_dict(self):
         result = {
             "url": self.url,
+            "title": self.title,
             "price": self.price,
             "currency": self.currency,
             "is_available": self.is_available,
             "is_on_sale": self.is_on_sale,
-            "before_price": self.before_price,
+            "price_before": self.price_before,
             "is_wrong_url": self.is_wrong_url,
         }
         return result
@@ -84,15 +95,21 @@ class CitrusParser(CustomParser):
         price = float("".join(raw_price.split()))
         currency = span_currency.text
         is_available = self.is_available(soup)
-        is_on_sale, before_price = self.check_on_sale(soup)
+        is_on_sale, price_before = self.check_on_sale(soup)
+
+        title = None
+        h1_title = soup.find("h1", class_="product__title")
+        if h1_title:
+            title = h1_title.text.strip()
 
         result = ParserResult(
             url=link,
+            title=title,
             price=price,
             currency=currency,
             is_available=is_available,
             is_on_sale=is_on_sale,
-            before_price=before_price,
+            price_before=price_before,
         )
 
         return result
@@ -137,15 +154,21 @@ class AlloParser(CustomParser):
         price = float(div_price.find("meta", itemprop="price")["content"])
         currency = div_price.find("meta", itemprop="priceCurrency")["content"]
         is_available = self.is_available(soup)
-        is_on_sale, before_price = self.check_on_sale(soup)
+        is_on_sale, price_before = self.check_on_sale(soup)
+
+        title = None
+        h1_title = soup.find("h1", itemprop="name")
+        if h1_title:
+            title = h1_title.text.strip()
 
         result = ParserResult(
             url=link,
+            title=title,
             price=price,
             currency=currency,
             is_available=is_available,
             is_on_sale=is_on_sale,
-            before_price=before_price,
+            price_before=price_before,
         )
 
         return result
@@ -188,15 +211,21 @@ class EpicentrParser(CustomParser):
         currency = div_price.get_attribute_list("data-text")[0][0]
 
         is_available = True
-        is_on_sale, before_price = self.check_on_sale(soup)
+        is_on_sale, price_before = self.check_on_sale(soup)
+
+        title = None
+        h1_title = soup.find("h1")
+        if h1_title:
+            title = h1_title.text.strip()
 
         result = ParserResult(
             url=link,
+            title=title,
             price=price,
             currency=currency,
             is_available=is_available,
             is_on_sale=is_on_sale,
-            before_price=before_price,
+            price_before=price_before,
         )
 
         return result
@@ -242,6 +271,7 @@ def test_allo():
     parser = AlloParser()
 
     links = [
+        "https://allo.ua/ua/jelektrosamokaty/xiaomi-mi-electric-scooter-lite-black.html",
         (
             "https://allo.ua/ru/igrovye-pristavki/microsoft-xbox-one-s-"
             "1tb-white-gta-5-rasshirennaja-garantija-18-mesjacev.html"
