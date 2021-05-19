@@ -74,7 +74,12 @@ def get_campaign_results(campaign):
 
     parser = market.parser
     campaign_items = campaign.campaign_items.filter(is_active=True)
-    campaign_results = list(map(lambda item: parser.parse(item.url), campaign_items))
+
+    campaign_results = []
+    for item in campaign_items:
+        item_result = parser.parse(item.url).to_dict()
+        item_result["item_title"] = item.title
+        campaign_results.append(item_result)
     return campaign_results
 
 

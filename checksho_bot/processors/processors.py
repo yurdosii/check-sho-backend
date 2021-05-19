@@ -16,6 +16,12 @@ BOT_AVAILABLE_COMMANDS = {  # 'command': 'state name'
             *args, **kwargs
         ),
     },
+    "/runcampaign": {
+        "description": "Manually select campaign to run",
+        "function": lambda *args, **kwargs: campaigns.run_campaign.run_campaign(
+            *args, **kwargs
+        ),
+    },
     "/addcampaign": {
         "description": "Add new campaign",
         "function": lambda *args, **kwargs: campaigns.add_campaign.add_campaign(

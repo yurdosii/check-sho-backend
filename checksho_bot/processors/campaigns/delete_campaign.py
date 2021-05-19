@@ -1,6 +1,5 @@
 from enum import Enum
 
-from django.core.paginator import Paginator
 from django_tgbot.decorators import processor
 from django_tgbot.exceptions import ProcessFailure
 from django_tgbot.state_manager import message_types, state_types, update_types
@@ -15,7 +14,11 @@ from checksho_bot.bot import TelegramBot, state_manager
 from checksho_bot.models import TelegramState
 from utils.telegram import telegram_command
 
-from ..utils import remove_keyboard_markup
+from ..utils import (
+    get_navigation_buttons,
+    get_paginator_and_pages,
+    remove_keyboard_markup,
+)
 
 
 class DeleteCampaignState(Enum):
@@ -23,18 +26,10 @@ class DeleteCampaignState(Enum):
     CONFIRMATION = "delete_campaign__confirmation"
 
 
-def get_paginator_data(page):
-    # TODO - campaigns by user
-    # TODO - cache somehow this
-    # TODO - Market щоб був як link, глянь як то робиться
-    campaigns = Campaign.objects.all().order_by("title")
-    p = Paginator(campaigns, 5)
+def get_campaigns_buttons(page: int):
+    p, previous_page, next_page = get_paginator_and_pages(page)
 
     campaigns_by_page = p.page(page).object_list
-
-    previous_page = page - 1 if page - 1 > 0 else p.num_pages
-    next_page = (page + 1) if page + 1 <= p.num_pages else 1
-
     campaigns_buttons = list(
         map(
             lambda campaign: (
@@ -43,11 +38,10 @@ def get_paginator_data(page):
             campaigns_by_page,
         )
     )
-    navigation_buttons = [
-        InlineKeyboardButton.a("❮", callback_data=f"#{previous_page}"),
-        InlineKeyboardButton.a(f"{page}/{p.num_pages}", callback_data=f"#{page}"),
-        InlineKeyboardButton.a("❱", callback_data=f"#{next_page}"),
-    ]
+
+    navigation_buttons = get_navigation_buttons(
+        page, previous_page, next_page, p.num_pages
+    )
     campaigns_buttons.append(navigation_buttons)
 
     return campaigns_buttons
@@ -62,7 +56,7 @@ def delete_campaign(bot: TelegramBot, update: Update, state: TelegramState):
     state.update_memory({"page": 1})
 
     # send response
-    campaigns_buttons = get_paginator_data(1)
+    campaigns_buttons = get_campaigns_buttons(1)
     text = "Select campaign to delete:"
     bot.sendMessage(
         chat_id,
@@ -99,9 +93,9 @@ def handle_callback_query(bot: TelegramBot, update, state):
         state.update_memory({"page": page})
 
         # send response
-        campaigns_buttons = get_paginator_data(page)
+        campaigns_buttons = get_campaigns_buttons(page)
         bot.editMessageText(
-            "Select campaign to delete",
+            "Select campaign to delete:",
             chat_id,
             message_id,
             parse_mode=bot.PARSE_MODE_MARKDOWN,
@@ -127,7 +121,7 @@ def handle_callback_query(bot: TelegramBot, update, state):
         # send response
         text = "Do you really want to delete campaign:\n\n"
         text += f"*Title*: `{campaign.title}`\n"
-        text += f"*Market*: `{campaign.market.title}`\n"
+        text += f"*Market*: [{campaign.market.title}]({campaign.market.url})\n"
         text += f"*Items number*: `{campaign.campaign_items.count()}`\n"
         buttons = [
             [
@@ -144,6 +138,7 @@ def handle_callback_query(bot: TelegramBot, update, state):
                 resize_keyboard=True,
                 one_time_keyboard=True,
             ),
+            disable_web_page_preview=True,  # disable link preview
         )
 
         # change state
@@ -164,6 +159,7 @@ def handle_delete_campaign_confirmation(bot: TelegramBot, update, state):
 
     # send response
     if text.lower() == "yes":
+        # delete campaign
         campaign_id = state.get_memory().get("campaign_id")
         campaign = Campaign.objects.filter(id=campaign_id).first()
         if not campaign:
@@ -172,6 +168,7 @@ def handle_delete_campaign_confirmation(bot: TelegramBot, update, state):
             raise ProcessFailure
         campaign.delete()
 
+        # send response
         response = "Campaign was deleted"
         bot.sendMessage(
             chat_id,
@@ -193,3 +190,17 @@ def handle_delete_campaign_confirmation(bot: TelegramBot, update, state):
         response = "Use keyboard below please"
         bot.sendMessage(chat_id, response)
         raise ProcessFailure
+
+    # reset memory
+    state.reset_memory()
+
+
+@processor(
+    state_manager,
+    from_states=DeleteCampaignState.CALLBACK.value,
+    success=state_types.Keep,
+    exclude_update_types=[update_types.CallbackQuery],
+)
+def callback_only(bot, update, state):
+    text = "Please use buttons in message"
+    bot.sendMessage(update.get_chat().get_id(), text)

@@ -4,8 +4,8 @@ import logging
 
 # TODO - enum ???
 EMOJI = {
-    "YES": "✅",
-    "NO": "❌",
+    True: "✅",
+    False: "❌",
 }
 
 
