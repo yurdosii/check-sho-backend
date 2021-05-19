@@ -1,5 +1,7 @@
+from collections import OrderedDict
+
 from django_tgbot.decorators import processor
-from django_tgbot.state_manager import message_types, state_types, update_types
+from django_tgbot.state_manager import message_types, update_types
 from django_tgbot.types.update import Update
 
 from checksho_bot.bot import TelegramBot, state_manager
@@ -9,37 +11,41 @@ from utils.telegram import telegram_command
 
 
 # TODO - Reset button in /addcampaign, /editcampaign, ...  (commands with a lot of steps)
-BOT_AVAILABLE_COMMANDS = {  # 'command': 'state name'
-    "/campaigns": {
-        "description": "List available campaigns",
-        "function": lambda *args, **kwargs: campaigns.list_campaigns.list_campaigns(
-            *args, **kwargs
-        ),
-    },
-    "/runcampaign": {
-        "description": "Manually select campaign to run",
-        "function": lambda *args, **kwargs: campaigns.run_campaign.run_campaign(
-            *args, **kwargs
-        ),
-    },
-    "/addcampaign": {
-        "description": "Add new campaign",
-        "function": lambda *args, **kwargs: campaigns.add_campaign.add_campaign(
-            *args, **kwargs
-        ),
-    },
-    "/deletecampaign": {
-        "description": "Delete campaign",
-        "function": lambda *args, **kwargs: campaigns.delete_campaign.delete_campaign(
-            *args, **kwargs
-        ),
-    },
-    "/status": {
-        "description": "Run active campaigns",
-        "function": lambda *args, **kwargs: check_status(*args, **kwargs),
+BOT_AVAILABLE_COMMANDS = OrderedDict(
+    {
+        "/status": {
+            "description": "Run active campaigns",
+            "function": lambda *args, **kwargs: campaigns.run_campaigns.run_campaigns(
+                *args, **kwargs
+            ),
+        },
+        "/campaigns": {
+            "description": "List campaigns",
+            "function": lambda *args, **kwargs: campaigns.list_campaigns.list_campaigns(
+                *args, **kwargs
+            ),
+        },
+        "/runcampaign": {
+            "description": "Manually select campaign to run",
+            "function": lambda *args, **kwargs: campaigns.run_campaign.run_campaign(
+                *args, **kwargs
+            ),
+        },
+        "/addcampaign": {
+            "description": "Add new campaign",
+            "function": lambda *args, **kwargs: campaigns.add_campaign.add_campaign(
+                *args, **kwargs
+            ),
+        },
+        "/deletecampaign": {
+            "description": "Delete campaign",
+            "function": lambda *args, **kwargs: campaigns.delete_campaign.delete_campaign(
+                *args, **kwargs
+            ),
+        },
+        # run selected command
     }
-    # run selected command
-}
+)
 
 # https://django-tgbot.readthedocs.io/en/latest/processors/ - 'update_types'
 state_manager.set_default_update_types(update_types.Message)
@@ -71,21 +77,7 @@ def handle_help_command(chat_id: str, bot: TelegramBot, state: TelegramState):
 
 
 def handle_wrong_command(chat_id: str, bot: TelegramBot, state: TelegramState):
-    text = "Wrong command. Type /help to get list of avaialable commands"
+    text = "Wrong command. Type /help to get list of available commands"
 
     bot.sendMessage(chat_id, text)
     state.set_name("")
-
-
-@telegram_command
-def check_status(bot: TelegramBot, update: Update, state: TelegramState):
-    chat_id = update.get_chat().get_id()
-
-    text = "Running campaign"
-    message = bot.sendMessage(chat_id, text)
-
-    for _ in range(3):
-        text += "."
-        bot.editMessageText(text, chat_id, message.message_id)
-
-    bot.editMessageText("Result: ", chat_id, message.message_id)

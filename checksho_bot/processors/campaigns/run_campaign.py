@@ -1,4 +1,3 @@
-from datetime import datetime
 from enum import Enum
 
 from django_tgbot.decorators import processor
@@ -8,11 +7,11 @@ from django_tgbot.types.inlinekeyboardbutton import InlineKeyboardButton
 from django_tgbot.types.inlinekeyboardmarkup import InlineKeyboardMarkup
 from django_tgbot.types.update import Update
 
-from campaigns.helpers import get_campaign_results
+from campaigns.helpers import get_campaign_results, get_telegram_run_campaign_text
 from campaigns.models import Campaign
 from checksho_bot.bot import TelegramBot, state_manager
 from checksho_bot.models import TelegramState
-from utils.telegram import EMOJI, telegram_command
+from utils.telegram import telegram_command
 
 from ..utils import get_navigation_buttons, get_paginator_and_pages
 
@@ -45,58 +44,6 @@ def get_campaigns_buttons(page: int):
     campaigns_buttons.append(navigation_buttons)
 
     return campaigns_buttons
-
-
-def get_run_campaign_text(campaign: Campaign, results: list):
-    # get check time
-    now = datetime.now()
-    now_formatted = now.strftime("%d/%m/%Y %H:%M:%S")
-
-    # format text by campaign
-    text = f"*Campaign* '`{campaign.title}`':\n\n"
-    text += f"*Market*: [{campaign.market.title}]({campaign.market.url})\n"
-    text += f"*Run time*: {now_formatted}\n\n"
-    text += "*Items*:\n\n"
-
-    # format text by items
-    for result in results:
-        # TODO - check on sale (write '!!!!!!!!!!' if it is on sale for example)
-
-        # get result data
-        result_item_title = result["item_title"]
-        result_url = result["url"]
-        result_is_wrong_url = result["is_wrong_url"]
-        result_is_available = result["is_available"]
-        result_price = result["price"]
-        result_is_on_sale = result["is_on_sale"]
-        result_price_before = result["price_before"]
-
-        text += f"_URL_: [{result_item_title}]({result_url})\n"
-
-        # handle wrong url
-        if result_is_wrong_url:
-            text += "_Error_: something is wrong with the item "
-            text += "(item can be removed, link can be invalid), "
-            text += "please check it manually\n\n"
-            continue
-
-        # handle item availability
-        text += f"_Available_: {EMOJI[result_is_available]}\n"
-        if not result_is_available:
-            text += "\n\n"
-            continue
-
-        # handle price and sale
-        text += f"_Price_: `{result['price']}`\n"
-        text += f"_On sale_: {EMOJI[result_is_on_sale]}\n"
-
-        if result_is_on_sale:
-            diff = result_price_before - result_price
-            text += f"_Price before_: `{result_price_before}` (-*{diff}*)\n"
-
-        text += "\n\n"
-
-    return text
 
 
 @telegram_command
@@ -173,7 +120,7 @@ def handle_callback_query(bot: TelegramBot, update, state):
 
         # get results
         results = get_campaign_results(campaign)
-        text = get_run_campaign_text(campaign, results)
+        text = get_telegram_run_campaign_text(campaign, results)
 
         # send response
         bot.sendMessage(
