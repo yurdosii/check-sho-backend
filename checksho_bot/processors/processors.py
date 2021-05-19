@@ -43,7 +43,6 @@ BOT_AVAILABLE_COMMANDS = OrderedDict(
                 *args, **kwargs
             ),
         },
-        # run selected command
     }
 )
 

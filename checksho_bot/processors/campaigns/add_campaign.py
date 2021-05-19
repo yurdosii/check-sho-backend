@@ -1,20 +1,22 @@
 from enum import Enum
 
-from checksho_bot.bot import TelegramBot, state_manager
-from checksho_bot.models import TelegramState
 from django_tgbot.decorators import processor
 from django_tgbot.exceptions import ProcessFailure
 from django_tgbot.state_manager import message_types, state_types
 from django_tgbot.types.keyboardbutton import KeyboardButton
 from django_tgbot.types.replykeyboardmarkup import ReplyKeyboardMarkup
-from django_tgbot.types.replykeyboardremove import ReplyKeyboardRemove
 from django_tgbot.types.update import Update
+
+from campaigns import helpers as campaigns_helpers
+from campaigns.models import CampaignInterval, Market
+from checksho_bot.bot import TelegramBot, state_manager
+from checksho_bot.models import TelegramState
 from utils.list import split_into_chunks
 from utils.telegram import telegram_command
 from utils.validators import is_campaign_item_url_is_valid
 
-from campaigns import helpers as campaigns_helpers
-from campaigns.models import CampaignInterval, Market
+from ..utils import remove_keyboard_markup
+
 
 # Important notes
 # - user cannot edit what he already wrote in the end (for now)
@@ -545,5 +547,5 @@ def keyboard_only(bot, update, state):
     bot.sendMessage(update.get_chat().get_id(), text)
 
 
-def remove_keyboard_markup():
-    return ReplyKeyboardRemove.a(remove_keyboard=True)
+# TODO - думаю щоб забрати оцей вибір і зразу додати хоча
+# TODO - б 1 Campaign Item і тоді вже питати чи ще чи всьо

@@ -27,7 +27,9 @@ class DeleteCampaignState(Enum):
 
 
 def get_campaigns_buttons(page: int):
-    p, previous_page, next_page = get_paginator_and_pages(page)
+    p, previous_page, next_page = get_paginator_and_pages(
+        page, per_page=5, order_by="title"
+    )
 
     campaigns_by_page = p.page(page).object_list
     campaigns_buttons = list(

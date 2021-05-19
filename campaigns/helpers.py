@@ -160,3 +160,36 @@ def get_telegram_run_campaign_text(campaign, results, set_runtime=True):
         text += "\n"
 
     return text
+
+
+def get_telegram_get_campaign_text(campaign):
+    items = campaign.campaign_items.all()
+
+    # format text by campaign
+    text = f"*Campaign* '`{campaign.title}`':\n"
+    text += f"*Market*: [{campaign.market.title}]({campaign.market.url})\n"
+
+    if campaign.interval:
+        text += f"*Interval*: `Every {campaign.interval.lower()}`\n"
+    else:
+        text += "*Interval*: `Not set`\n"
+
+    text += f"*Active*: {EMOJI[campaign.is_active]}\n"
+    text += f"*Type*: `{campaign.campaign_type}`\n"
+
+    text += "\n"
+
+    if items:
+        text += "*Items*:\n\n"
+    else:
+        text += "*Items*: Not set\n\n"
+
+    # format text by items
+    for item in items:
+        text += f"_URL_: [{item.title}]({item.url})\n"
+        text += f"_Active_: {EMOJI[item.is_active]}\n"
+        # TODO - handle types
+
+        text += "\n"
+
+    return text
