@@ -378,13 +378,14 @@ def handle_campaign_item_finish_choice(
         campaign = campaigns_helpers.create_campaign_from_telegram(memory)
 
         # send campaign's data
-        response = "Great! So campaign with this data was created:"
-        response += campaign.telegram_format
+        response = "Great! So campaign with this data was created:\n\n"
+        response += campaigns_helpers.get_telegram_get_campaign_text(campaign)
         bot.sendMessage(
             chat_id,
             response,
             reply_markup=remove_keyboard_markup(),
             parse_mode=bot.PARSE_MODE_MARKDOWN,
+            disable_web_page_preview=True,  # disable link preview
         )
 
         # update state and memory
@@ -411,7 +412,7 @@ def add_campaign_item_urls(bot: TelegramBot, update: Update, state: TelegramStat
     urls_raw = update.get_message().get_text()
 
     # check url
-    urls = urls_raw.split("\n")
+    urls = map(lambda url: url.strip(), urls_raw.split("\n"))
     urls = set(urls)
 
     memory = state.get_memory()
@@ -497,13 +498,14 @@ def handle_campaign_item_urls_choice(
         campaign = campaigns_helpers.create_campaign_from_telegram(memory)
 
         # send campaign's data
-        response = "Great! So campaign with this data was created:"
-        response += campaign.telegram_format
+        response = "Great! So campaign with this data was created:\n\n"
+        response += campaigns_helpers.get_telegram_get_campaign_text(campaign)
         bot.sendMessage(
             chat_id,
             response,
             reply_markup=remove_keyboard_markup(),
             parse_mode=bot.PARSE_MODE_MARKDOWN,
+            disable_web_page_preview=True,  # disable link preview
         )
 
         # update state and memory

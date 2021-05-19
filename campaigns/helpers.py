@@ -96,7 +96,13 @@ def create_campaign_from_telegram(data: str, owner=None):
     interval = data.get("interval")
     items = data.get("items")
 
-    campaign = Campaign(title=title, market=market, interval=interval, is_active=True)
+    campaign = Campaign(
+        title=title,
+        market=market,
+        interval=interval,
+        is_active=True,
+        is_telegram_campaign=True,
+    )
     campaign.save()
 
     for item in items:
