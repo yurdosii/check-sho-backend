@@ -1,6 +1,6 @@
+from datetime import timedelta
 from enum import Enum
 from urllib.parse import urlparse
-from datetime import timedelta
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _

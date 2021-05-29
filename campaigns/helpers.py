@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+
 from django.utils import timezone
 
 from templates.emails import CAMPAIGN_ITEM_TEMPLATE, CAMPAIGN_TEMPLATE

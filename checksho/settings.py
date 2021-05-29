@@ -270,3 +270,6 @@ CELERY_TASK_ALWAYS_EAGER = (
     True  # tasks will be executed locally, instead of sent to the queue
 )
 CELERY_TASK_EAGER_PROPAGATES = True  # tasks called by .apply() will do exception
+
+# Client URL
+CLIENT_URL = "http://localhost:3000/"

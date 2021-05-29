@@ -1,7 +1,7 @@
 from django.db.models import signals
 from django.dispatch import receiver
 
-from . import models, helpers
+from . import helpers, models
 
 
 @receiver(signals.post_save, sender=models.CampaignItem)

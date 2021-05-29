@@ -1,6 +1,7 @@
 import logging
 
 from django.utils import timezone
+
 from checksho_bot.models import TelegramUser
 
 from .models import User
@@ -69,7 +70,6 @@ def remove_telegram_user_from_user(user):
     """
     user.telegram_user = None
     user.save()
-
 
 
 def set_user_role_on_creation(user):
