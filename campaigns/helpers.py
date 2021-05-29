@@ -69,6 +69,16 @@ def run_email_campaign(campaign):
     return results
 
 
+def get_campaign_item_title(market, url: str):
+    if not market or not market.parser:
+        return ""
+
+    parser = market.parser
+    item_result = parser.parse(url).to_dict()
+    item_title = item_result.get("title")
+    return item_title
+
+
 def get_campaign_results(campaign):
     market = campaign.market
     if not market or not market.parser:
@@ -102,6 +112,7 @@ def create_campaign_from_telegram(data: str, owner=None):
         interval=interval,
         is_active=True,
         is_telegram_campaign=True,
+        owner=owner,
     )
     campaign.save()
 

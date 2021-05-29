@@ -16,12 +16,12 @@ Campaign creation
             і щоб юзер підтвердив що то саме те що він хотів
         )
         -> choice
-            -> add more items (again from '-> url')
+            -> add more items (again from choice 'one by one' / 'many at once')
             -> finish
     -> many at once
         -> list of urls
         -> choice
-            -> add more urls (again from '-> list of urls')
+            -> add more items (again from choice 'one by one' / 'many at once')
             -> finish
 -> final choice
     -> create (виведеться просто дані і людина вже клікає чи створювати чи не)
