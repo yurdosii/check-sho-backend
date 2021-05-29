@@ -3,7 +3,6 @@ from datetime import datetime
 from django_tgbot.types.update import Update
 
 from campaigns.helpers import get_campaign_results, get_telegram_run_campaign_text
-from campaigns.models import Campaign
 from checksho_bot.bot import TelegramBot
 from checksho_bot.models import TelegramState
 from utils.telegram import telegram_command
@@ -14,11 +13,14 @@ def run_campaigns(bot: TelegramBot, update: Update, state: TelegramState):
     # get chat data
     chat_id = update.get_chat().get_id()
 
+    # get campaigns
+    telegram_user = state.telegram_user
+    campaigns = telegram_user.user_campaigns
+
     # check campaigns
-    # TODO - campaigns by user
-    campaigns = Campaign.objects.filter(is_active=True)
     if not campaigns:
-        text = "No active campaigns, please create or set campaigns to be active to run"
+        text = "No active campaigns, please create new campaign "
+        text += "or set existing campaigns to be active to run"
         bot.sendMessage(chat_id, text)
         return
 

@@ -1,5 +1,7 @@
 from enum import Enum
 
+from django.conf import settings
+from django.db.models import QuerySet
 from django_tgbot.decorators import processor
 from django_tgbot.state_manager import state_types, update_types
 from django_tgbot.types.inlinekeyboardbutton import InlineKeyboardButton
@@ -7,7 +9,6 @@ from django_tgbot.types.inlinekeyboardmarkup import InlineKeyboardMarkup
 from django_tgbot.types.update import Update
 
 from campaigns.helpers import get_telegram_get_campaign_text
-from campaigns.models import Campaign
 from checksho_bot.bot import TelegramBot, state_manager
 from checksho_bot.models import TelegramState
 from utils.telegram import telegram_command
@@ -19,9 +20,9 @@ class ListCampaignsState(Enum):
     CALLBACK = "list_campaigns__callback"
 
 
-def get_text_and_buttons(page: int):
+def get_text_and_buttons(campaigns: QuerySet, page: int):
     p, previous_page, next_page = get_paginator_and_pages(
-        page, per_page=1, order_by=None
+        campaigns, page, per_page=1, order_by=None
     )
 
     campaign = p.page(page).object_list[0]
@@ -51,16 +52,32 @@ def list_campaigns(bot: TelegramBot, update: Update, state: TelegramState):
     # get chat data
     chat_id = update.get_chat().get_id()
 
+    # get campaigns
+    telegram_user = state.telegram_user
+    campaigns = telegram_user.user_campaigns
+
     # check campaigns
-    # TODO - campaigns by user
-    campaigns = Campaign.objects.all()
     if not campaigns:
-        text = "No campaigns was created. You can create a campaign using /addcampaign command"
-        bot.sendMessage(chat_id, text)
+        text = "No campaigns was created. "
+        text += "You can create a campaign using /addcampaign command "
+
+        # when localhost - it won't show as link
+        if "localhost" not in settings.CLIENT_URL:
+            text += f"or on [web application]({settings.CLIENT_URL})"
+
+        bot.sendMessage(
+            chat_id,
+            text,
+            parse_mode=bot.PARSE_MODE_MARKDOWN,
+            disable_web_page_preview=True,  # disable link preview
+        )
         return
 
+    # save page
+    state.update_memory({"page": 1})
+
     # send response
-    text, buttons = get_text_and_buttons(1)
+    text, buttons = get_text_and_buttons(campaigns, 1)
     bot.sendMessage(
         chat_id,
         text,
@@ -95,8 +112,12 @@ def handle_callback_query(bot: TelegramBot, update, state):
         # save page
         state.update_memory({"page": page})
 
+        # get campaigns
+        telegram_user = state.telegram_user
+        campaigns = telegram_user.user_campaigns
+
         # send response
-        text, buttons = get_text_and_buttons(page)
+        text, buttons = get_text_and_buttons(campaigns, page)
         bot.editMessageText(
             text,
             chat_id,
@@ -112,7 +133,12 @@ def handle_callback_query(bot: TelegramBot, update, state):
     elif callback_data == "all":
         # show all campaigns at once
 
-        campaigns = Campaign.objects.all()
+        # TODO - if message is long, it won't show markdown, so split it by 4 campaigns
+        # and send a lot of messages
+
+        # get campaigns
+        telegram_user = state.telegram_user
+        campaigns = telegram_user.user_campaigns
 
         # get campaign data
         sep = "#" * 30
