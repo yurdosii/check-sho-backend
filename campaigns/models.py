@@ -16,6 +16,11 @@ class CampaignInterval(Enum):
     WEEK = "Every week"
 
 
+class CampaignType(Enum):
+    TELEGRAM = "is_telegram_campaign"
+    EMAIL = "is_email_campaign"
+
+
 class CampaignItemType(Enum):
     CHECK_PRICE = "Check price"
     CHECK_SALE = "Check sale"
@@ -35,7 +40,7 @@ class Campaign(models.Model):
     owner = models.ForeignKey(
         "users.User",
         related_name="campaigns",
-        on_delete=models.SET_NULL,  # TODO - think about it later
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
@@ -66,7 +71,8 @@ class Campaign(models.Model):
 
     @property
     def telegram_format(self):
-        is_active = EMOJI["YES"] if self.is_active else EMOJI["NO"]
+        # TODO - remove probably
+        is_active = EMOJI[self.is_active]
 
         result = f"""
 *Campaign*: {self.title}
@@ -84,8 +90,34 @@ class Campaign(models.Model):
 
         return result
 
+    @property
+    def campaign_type(self):
+        # TODO - whether it is use
+        types = []
+
+        if self.is_telegram_campaign:
+            types.append("Telegram")
+        if self.is_email_campaign:
+            types.append("Email")
+
+        type = "Not set"
+        if types:
+            type = ", ".join(types)
+        return type
+
+    def run_campaign(self):
+        results = helpers.get_campaign_results(self)
+        # results = list(map(lambda result: result.to_dict(), results_objects))
+        return results
+
+    def run_telegram_campaign(self):
+        results = self.run_campaign()
+        # breakpoint()
+        return results
+
 
 # TODO (подумай) - різні налаштування CampaignItem, типу - "check price", "перевіряти наявність"
+# TODO - title shouldn't be empty, if user don't provide it, parse it from page on creation
 class CampaignItem(models.Model):
     title = models.CharField(_("Title"), max_length=1024, blank=True, null=True)
     description = models.CharField(
@@ -119,7 +151,8 @@ class CampaignItem(models.Model):
 
     @property
     def telegram_format(self):
-        is_active = EMOJI["YES"] if self.is_active else EMOJI["NO"]
+        # TODO - remove probably
+        is_active = EMOJI[self.is_active]
 
         # TODO - add name щоб був обов'язковий і шо
         # TODO - типу якщо не встановлює то щоб автоматично підтягувати
@@ -128,8 +161,6 @@ _Url_: `{self.url}`
 *Active*: {is_active}
         """
         return result
-
-    # TODO - - validation by market url - думаю не
 
 
 class Market(models.Model):

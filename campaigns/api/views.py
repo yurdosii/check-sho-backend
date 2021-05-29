@@ -15,11 +15,17 @@ from . import serializers as campaigns_serializers
 logger = logging.getLogger(__name__)
 
 
+# TODO - в celery task заюзай select_related i prefetch_related
+
+
 class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
     queryset = campaigns_models.Campaign.objects.all()
     serializer_class = campaigns_serializers.CampaignSerializer
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(owner=self.request.user).order_by("-updated_at")
 
     @action(detail=True, methods=["post"])
     def run_campaign(self, request, **kwargs):
@@ -68,7 +74,7 @@ class MarketViewSet(viewsets.ModelViewSet):
 
 class CampaignItemViewSet(viewsets.ModelViewSet):
     queryset = campaigns_models.CampaignItem.objects.all()
-    serializer_class = campaigns_serializers.CampaignItemSerializers
+    serializer_class = campaigns_serializers.CampaignItemSerializer
     lookup_field = "pk"
     permission_classes = [IsAuthenticated]
 
@@ -77,12 +83,30 @@ class CampaignItemViewSet(viewsets.ModelViewSet):
             campaign__pk=self.kwargs["campaign_pk"]
         )
 
+    def get_campaign(self):
+        campaign = campaigns_models.Campaign.objects.get(id=self.kwargs["campaign_pk"])
+        return campaign
+
     @action(detail=False, methods=["post"])
     def create_list(self, request, **kwargs):
         campaign_pk = self.kwargs["campaign_pk"]
         data = list(map(lambda item: {**item, "campaign": campaign_pk}, request.data))
 
         serializer = self.get_serializer(data=data, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["put", "patch"])
+    def update_list(self, request, **kwargs):
+        campaign_pk = self.kwargs["campaign_pk"]
+        campaign = self.get_campaign()
+
+        items = campaign.campaign_items.all()
+        data = list(map(lambda item: {**item, "campaign": campaign_pk}, request.data))
+
+        serializer = self.get_serializer(items, data=data, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
