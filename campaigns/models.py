@@ -1,5 +1,6 @@
 from enum import Enum
 from urllib.parse import urlparse
+from datetime import timedelta
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -14,6 +15,12 @@ class CampaignInterval(Enum):
     HOUR = "Every hour"
     DAY = "Every day"
     WEEK = "Every week"
+
+
+class CampaignIntervalTimedelta(Enum):
+    HOUR = timedelta(hours=1)
+    DAY = timedelta(days=1)
+    WEEK = timedelta(days=7)
 
 
 class CampaignType(Enum):

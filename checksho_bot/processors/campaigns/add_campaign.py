@@ -452,8 +452,6 @@ def handle_campaign_finish_choice(
         user = getattr(telegram_user, "user", None)
         campaign = campaigns_helpers.create_campaign_from_telegram(memory, user)
 
-        # TODO - get updated campaign, because then items' titles will be parsed and set
-
         # send campaign's data
         response = "Great! So campaign with this data was created:\n\n"
         response += campaigns_helpers.get_telegram_get_campaign_text(campaign)

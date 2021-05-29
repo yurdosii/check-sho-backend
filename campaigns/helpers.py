@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from django.utils import timezone
 
 from templates.emails import CAMPAIGN_ITEM_TEMPLATE, CAMPAIGN_TEMPLATE
 from utils.emails import send_email_message
@@ -210,3 +211,28 @@ def get_telegram_get_campaign_text(campaign):
         text += "\n"
 
     return text
+
+
+def check_item_title_on_creation(item):
+    """
+    CampaignItem can be created with blank title, parse it from page then
+    """
+    if item.campaign and not item.title:
+        item_title = get_campaign_item_title(item.campaign.market, item.url)
+        item.title = item_title
+        item.save()
+
+
+def update_campaign_next_run(campaign):
+    """
+    If next_run is not set but campaign is active - set it
+    """
+    from .models import CampaignIntervalTimedelta
+
+    if campaign.interval:
+        now = timezone.now()
+        interval_timedelta = CampaignIntervalTimedelta[campaign.interval].value
+        next_run = interval_timedelta + now
+
+        campaign.next_run = next_run
+        campaign.save()

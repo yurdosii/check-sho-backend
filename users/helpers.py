@@ -1,5 +1,6 @@
 import logging
 
+from django.utils import timezone
 from checksho_bot.models import TelegramUser
 
 from .models import User
@@ -28,6 +29,7 @@ def link_telegram_user_to_user(user: User, telegram_response: dict):
     After login via telegram on client callback with telegram data is sent
     Get or create TelegramUser and link it with User (set to User.telegram_user field)
     """
+    # TODO - sync campaigns and delete that user (set is_active=False (на всякий випадок))
     telegram_user = handle_telegram_user(telegram_response)
     if not telegram_user:
         logging.warning(
@@ -41,3 +43,13 @@ def link_telegram_user_to_user(user: User, telegram_response: dict):
         user.save()
 
     return user
+
+
+def set_user_role_on_creation(user):
+    """
+    If user was created by web application (not by admin panel)
+    Then it is basic user and we need to set the role
+    """
+    if not user.role:
+        user.role = User.USER
+        user.save()
