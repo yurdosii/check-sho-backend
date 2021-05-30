@@ -94,6 +94,8 @@ def get_campaign_results(campaign):
     for item in campaign_items:
         item_result = parser.parse(item.url).to_dict()
         item_result["item_title"] = item.title
+        item_result["item_is_notify_sale"] = item.is_notify_sale
+        item_result["item_is_notify_available"] = item.is_notify_available
         campaign_results.append(item_result)
     return campaign_results
 
@@ -142,10 +144,10 @@ def get_telegram_run_campaign_text(campaign, results, set_runtime=True):
 
     # format text by items
     for result in results:
-        # TODO - check on sale (write '!!!!!!!!!!' if it is on sale for example)
-
         # get result data
         result_item_title = result["item_title"]
+        result_item_is_notify_sale = result["item_is_notify_sale"]
+        result_item_is_notify_available = result["item_is_notify_available"]
         result_url = result["url"]
         result_is_wrong_url = result["is_wrong_url"]
         result_is_available = result["is_available"]
@@ -163,10 +165,17 @@ def get_telegram_run_campaign_text(campaign, results, set_runtime=True):
             continue
 
         # handle item availability
-        text += f"_Available_: {EMOJI[result_is_available]}\n"
+        text += f"_Available_: {EMOJI[result_is_available]}"
         if not result_is_available:
             text += "\n\n"
             continue
+
+        # handle notify availability
+        if result_item_is_notify_available:
+            text += "   *(!!!)*"
+
+        # set new line for available
+        text += "\n"
 
         # handle price and sale
         text += f"_Price_: `{result['price']}`\n"
@@ -174,7 +183,14 @@ def get_telegram_run_campaign_text(campaign, results, set_runtime=True):
 
         if result_is_on_sale:
             diff = result_price_before - result_price
-            text += f"_Price before_: `{result_price_before}` (-*{diff}*)\n"
+            text += f"_Price before_: `{result_price_before}` (-*{diff}*)"
+
+            # handle notify sale
+            if result_item_is_notify_sale:
+                text += "   *(!!!)*"
+
+            # set new line for on sale
+            text += "\n"
 
         text += "\n"
 
@@ -207,7 +223,10 @@ def get_telegram_get_campaign_text(campaign):
     for item in items:
         text += f"_URL_: [{item.title}]({item.url})\n"
         text += f"_Active_: {EMOJI[item.is_active]}\n"
-        # TODO - handle types
+
+        if item.is_notify_sale or item.is_notify_available:
+            notify = ", ".join(item.notify_list)
+            text += f"_Notify_: `{notify}`\n"
 
         text += "\n"
 
@@ -337,12 +356,21 @@ def get_email_campaign_body(results: list):
     for result in results:
         # get result data
         result_item_title = result["item_title"]
+        result_item_is_notify_sale = result["item_is_notify_sale"]
+        result_item_is_notify_available = result["item_is_notify_available"]
         result_url = result["url"]
         result_is_available = result["is_available"]
         result_price = result["price"]
         result_currency = result["currency"]
         result_is_on_sale = result["is_on_sale"]
         result_price_before = result["price_before"]
+
+        is_notify_sale = (
+            "  (!!!)" if result_item_is_notify_sale and result_is_on_sale else ""
+        )
+        is_notify_available = (
+            "  (!!!)" if result_item_is_notify_available and result_is_available else ""
+        )
 
         # prepare html data
         html_data = dict(
@@ -354,6 +382,8 @@ def get_email_campaign_body(results: list):
             currency=result_currency,
             before_price="",
             before_price_currency="",
+            is_notify_sale=is_notify_sale,
+            is_notify_available=is_notify_available,
         )
         if result_is_on_sale:
             html_data.update(
