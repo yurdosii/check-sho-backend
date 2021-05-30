@@ -264,7 +264,7 @@ def run_campaign(user, campaign):
         sent_to.append("Telegram")
 
     # send to email
-    if campaign.is_email_campaign and campaign.owner:
+    if campaign.is_email_campaign and campaign.owner and campaign.owner.email:
         if getattr(settings, "EMAIL_HOST", None):
             send_campaign_results_to_email(campaign, campaign_results)
             sent_to.append("email")
@@ -375,3 +375,78 @@ def update_campaign_run_info_after_run(campaign):
     campaign.last_run = now
     campaign.next_run = now + campaign.interval_timedelta
     campaign.save()
+
+
+def run_campaigns(user, campaigns):
+    """
+    Celery scheduled task will call this method to run campaigns for
+    """
+    telegram_campaigns_info_to_run = []
+    email_campaigns_info_to_run = []
+    for campaign in campaigns:
+        results = get_campaign_results(campaign)
+
+        if campaign.is_telegram_campaign:
+            telegram_campaigns_info_to_run.append((campaign, results))
+        if campaign.is_email_campaign:
+            email_campaigns_info_to_run.append((campaign, results))
+
+        if campaign.is_telegram_campaign or campaign.is_email_campaign:
+            update_campaign_run_info_after_run(campaign)
+
+    send_campaigns_results_to_telegram(user, telegram_campaigns_info_to_run)
+    send_campaigns_results_to_email(user, email_campaigns_info_to_run)
+
+
+def send_campaigns_results_to_telegram(user, results_info):
+    """
+    Having user and results of campaigns that should be sent to Telegram
+    Send them to Telegram
+    """
+    # TODO - think, maybe 1 message for all Telegram campaigns and not 1 for each
+    telegram_user = user.telegram_user
+    if not telegram_user:
+        logging.warning(
+            f"TelegramUser of user '{user.username}' isn't set. "
+            "Unable to send results to Telegram"
+        )
+        return
+
+    for result_info in results_info:
+        campaign, campaign_results = result_info
+        send_campaign_results_to_telegram(campaign, telegram_user, campaign_results)
+
+
+def send_campaigns_results_to_email(user, results_info):
+    """ "
+    Having user and results of campaigns that should be sent to email
+    Send them to email
+    """
+    if not user.email:
+        logging.warning("User's email isn't set. Unable to send results to email")
+        return
+
+    if not getattr(settings, "EMAIL_HOST", None):
+        logging.warning("Email configuration missing")
+        return
+
+    # prepare for email message
+    subject = "CheckSho: results of scheduled campaigns"
+    to = [user.email]
+    body = """<h2>Results of scheduled campaigns:</h2>"""
+
+    # get messages's body
+    for result_info in results_info:
+        campaign, campaign_results = result_info
+
+        body += CAMPAIGN_TEMPLATE.format(
+            campaign_title=campaign.title,
+            market_title=campaign.market.title,
+            market_url=campaign.market.url,
+            campaign_runtime=timezone.now().strftime("%d/%m/%Y %H:%M:%S"),
+        )
+        body += get_email_campaign_body(campaign_results)
+        body += """<br><br>"""
+
+    # send email message
+    send_email_message(subject=subject, body=body, to=to)

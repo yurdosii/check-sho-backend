@@ -8,7 +8,7 @@ from rest_framework_serializer_extensions.views import SerializerExtensionsAPIVi
 
 from .. import helpers as campaigns_helpers
 from .. import models as campaigns_models
-from .. import tasks as campaings_tasks
+from .. import tasks as campaigns_tasks
 from . import serializers as campaigns_serializers
 
 
@@ -29,7 +29,7 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def run_endpoint_campaign(self, request, **kwargs):
-        # TODO - only campaign's owner can run campaign (add validation)
+        # TODO - remove this
         campaign = self.get_object()
         if not campaign.is_active:
             return Response(
@@ -37,12 +37,13 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
             )
 
         results = campaigns_helpers.run_endpoint_campaign(campaign)
-        campaings_tasks.debug_task.delay()
+        campaigns_tasks.debug_task.delay()
 
         return Response(results)
 
     @action(detail=True, methods=["post"])
     def test_email_campaign(self, request, **kwargs):
+        # TODO - remove this
         campaign = self.get_object()
         if not campaign.is_active:
             return Response(
@@ -89,6 +90,14 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
         notification_message = campaigns_helpers.run_campaign(request.user, campaign)
 
         return Response({"notification": notification_message})
+
+    @action(detail=False, methods=["post"])
+    def run_scheduled_campaigns(self, request):
+        """
+        To check celery task run_scheduled_campaigns by endpoint
+        """
+        campaigns_tasks.run_scheduled_campaigns.delay()
+        return Response({"status": "done"})
 
 
 class MarketViewSet(viewsets.ModelViewSet):

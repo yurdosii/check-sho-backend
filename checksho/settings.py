@@ -266,8 +266,8 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # (if I remove this, tasks will be done in celery worker, now it is locally)
 # (when is True, WORKER - do nothing, BEAT - scheduler and worker)
 # (when is False, WORKER - do tasks, BEAT - is scheduler and send tasks to worker)
-CELERY_TASK_ALWAYS_EAGER = (
-    True  # tasks will be executed locally, instead of sent to the queue
+CELERY_TASK_ALWAYS_EAGER = (  # tasks will be executed locally, instead of sent to the queue
+    True  # TODO - reload api and celery containers when value is changed
 )
 CELERY_TASK_EAGER_PROPAGATES = True  # tasks called by .apply() will do exception
 

@@ -1,5 +1,5 @@
 CAMPAIGN_TEMPLATE = """
-<h3>Campaign: '{campaign_title}'</h3>
+<h2>Campaign: '{campaign_title}'</h2>
 <h3>Market: <a href={market_url}>{market_title}</a> </h3>
 <h3>Run time: '{campaign_runtime}'</h3>
 <br>
