@@ -29,8 +29,8 @@ class CampaignType(Enum):
 
 
 class CampaignItemType(Enum):
-    CHECK_PRICE = "Check price"
-    CHECK_SALE = "Check sale"
+    NOTIFY_SALE = "Notify sale"
+    NOTIFY_AVAILABLE = "Notify available"
 
 
 class Campaign(models.Model):
@@ -154,12 +154,23 @@ class CampaignItem(models.Model):
         blank=True,
         null=True,
     )
+    is_notify_sale = models.BooleanField(default=False)
+    is_notify_available = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"CampaignItem: {self.title} - {self.url}"
+
+    @property
+    def notify_list(self):
+        notify = []
+        if self.is_notify_sale:
+            notify.append("Sale")
+        if self.is_notify_available:
+            notify.append("Availability")
+        return notify
 
     @property
     def telegram_format(self):

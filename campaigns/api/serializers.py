@@ -37,6 +37,7 @@ class CampaignItemSerializer(serializers.ModelSerializer):
     types = serializers.MultipleChoiceField(
         choices=[item.name for item in campaigns_models.CampaignItemType],
         required=False,
+        allow_null=True,
     )
 
     class Meta:
