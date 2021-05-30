@@ -77,6 +77,11 @@ class Campaign(models.Model):
         return f"Campaign: {self.title} by {self.owner}"
 
     @property
+    def interval_timedelta(self):
+        interval_timedelta = CampaignIntervalTimedelta[self.interval].value
+        return interval_timedelta
+
+    @property
     def telegram_format(self):
         # TODO - remove probably
         is_active = EMOJI[self.is_active]

@@ -14,4 +14,7 @@ def update_item_title_on_creation(instance, **kwargs):
 @receiver(signals.post_save, sender=models.Campaign)
 def update_campaign_next_run_on_save(instance, **kwargs):
     if instance.is_active and not instance.next_run:
-        helpers.update_campaign_next_run(instance)
+        helpers.set_campaign_next_run(instance)
+
+    if not instance.is_active and instance.next_run:
+        helpers.unset_campaign_next_run(instance)

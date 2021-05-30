@@ -18,6 +18,14 @@ class TelegramUser(AbstractTelegramUser):
             campaigns = Campaign.objects.filter(owner=user)
         return campaigns
 
+    @property
+    def user_telegram_chat(self):
+        telegram_state = self.telegram_states.first()
+        telegram_chat = None
+        if telegram_state:
+            telegram_chat = telegram_state.telegram_chat
+        return telegram_chat
+
 
 class TelegramChat(AbstractTelegramChat):
     pass

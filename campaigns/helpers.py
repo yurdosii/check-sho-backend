@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from django.conf import settings
 from django.utils import timezone
 
 from templates.emails import CAMPAIGN_ITEM_TEMPLATE, CAMPAIGN_TEMPLATE
@@ -100,7 +101,6 @@ def get_campaign_results(campaign):
 def create_campaign_from_telegram(data: str, owner=None):
     from campaigns.models import Campaign, CampaignItem, Market
 
-    # TODO - add owner
     market_title = data.get("market_title")
     market = Market.objects.get(title=market_title)
 
@@ -224,16 +224,154 @@ def check_item_title_on_creation(item):
         item.save()
 
 
-def update_campaign_next_run(campaign):
+def set_campaign_next_run(campaign):
     """
     If next_run is not set but campaign is active - set it
     """
-    from .models import CampaignIntervalTimedelta
-
     if campaign.interval:
         now = timezone.now()
-        interval_timedelta = CampaignIntervalTimedelta[campaign.interval].value
-        next_run = interval_timedelta + now
+        next_run = now + campaign.interval_timedelta
 
         campaign.next_run = next_run
         campaign.save()
+
+
+def unset_campaign_next_run(campaign):
+    """
+    If next_run is set but campaign isn't active - unset it
+    """
+    # TODO - model's method should be
+    campaign.next_run = None
+    campaign.save()
+
+
+def run_campaign(user, campaign):
+    """
+    Get campaign results
+    Send them to Telegram and/or email
+    Return notification message for client
+    """
+    logging.info(f"Running '{campaign.title}' campaign")
+    campaign_results = get_campaign_results(campaign)
+
+    sent_to = []
+
+    # send to telegram
+    telegram_user = user.telegram_user
+    if campaign.is_telegram_campaign and telegram_user:
+        send_campaign_results_to_telegram(campaign, telegram_user, campaign_results)
+
+        sent_to.append("Telegram")
+
+    # send to email
+    if campaign.is_email_campaign and campaign.owner:
+        if getattr(settings, "EMAIL_HOST", None):
+            send_campaign_results_to_email(campaign, campaign_results)
+            sent_to.append("email")
+        else:
+            logging.warning("Email configuration is missing")
+
+    # update last_run and next_run
+    update_campaign_run_info_after_run(campaign)
+
+    # create notification message
+    result = "Campaign was run. Please check your " + " and ".join(sent_to)
+
+    return result
+
+
+def send_campaign_results_to_telegram(campaign, telegram_user, results):
+    """
+    Having campaign run results, send them to Telegram
+    """
+    from checksho_bot.bot import bot
+
+    logging.info(f"Send results to Telegram of '{campaign.title}' campaign")
+
+    # get telegram chat
+    telegram_chat = telegram_user.user_telegram_chat
+    if not telegram_chat:
+        logging.warning(
+            f"No telegram chat for telegram user '{telegram_user.first_name}'"
+        )
+        return
+
+    # get run campaign text
+    chat_id = telegram_chat.telegram_id
+    text = "Result of running campaign:\n\n"
+    text += get_telegram_run_campaign_text(campaign, results)
+
+    # send message to Telegram
+    bot.sendMessage(
+        chat_id,
+        text,
+        parse_mode=bot.PARSE_MODE_MARKDOWN,
+        disable_web_page_preview=True,  # disable link preview
+    )
+
+
+def send_campaign_results_to_email(campaign, results):
+    """
+    Having campaign run results, send them to email
+    """
+    logging.info(f"Send results to email of '{campaign.title}' campaign")
+
+    # prepare for email message
+    subject = f"Campaign {campaign.title}"
+    to = [campaign.owner.email]
+    body = CAMPAIGN_TEMPLATE.format(
+        campaign_title=campaign.title,
+        market_title=campaign.market.title,
+        market_url=campaign.market.url,
+        campaign_runtime=timezone.now().strftime("%d/%m/%Y %H:%M:%S"),
+    )
+
+    body += get_email_campaign_body(results)
+
+    # send email message
+    send_email_message(subject=subject, body=body, to=to)
+
+
+def get_email_campaign_body(results: list):
+    body = ""
+    for result in results:
+        # get result data
+        result_item_title = result["item_title"]
+        result_url = result["url"]
+        result_is_available = result["is_available"]
+        result_price = result["price"]
+        result_currency = result["currency"]
+        result_is_on_sale = result["is_on_sale"]
+        result_price_before = result["price_before"]
+
+        # prepare html data
+        html_data = dict(
+            url=result_url,
+            title=result_item_title,
+            is_available="Yes" if result_is_available else "No",
+            is_on_sale="Yes" if result_is_on_sale else "No",
+            price=result_price,
+            currency=result_currency,
+            before_price="",
+            before_price_currency="",
+        )
+        if result_is_on_sale:
+            html_data.update(
+                dict(
+                    before_price=result_price_before,
+                    before_price_currency=result_currency,
+                )
+            )
+
+        item_html = CAMPAIGN_ITEM_TEMPLATE.format(**html_data)
+
+        body += item_html
+
+    return body
+
+
+def update_campaign_run_info_after_run(campaign):
+    now = timezone.now()
+    campaign.last_run = now
+    campaign.next_run = now + campaign.interval_timedelta
+    campaign.save()

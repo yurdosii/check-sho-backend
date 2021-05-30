@@ -28,7 +28,7 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
         return self.queryset.filter(owner=self.request.user).order_by("-updated_at")
 
     @action(detail=True, methods=["post"])
-    def run_campaign(self, request, **kwargs):
+    def run_endpoint_campaign(self, request, **kwargs):
         # TODO - only campaign's owner can run campaign (add validation)
         campaign = self.get_object()
         if not campaign.is_active:
@@ -58,6 +58,37 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
         results = campaigns_helpers.run_email_campaign(campaign)
 
         return Response(results)
+
+    @action(detail=True, methods=["post"])
+    def run_campaign(self, request, **kwargs):
+        campaign = self.get_object()
+        if campaign.owner != request.user:
+            return Response(
+                {"error": "You are not an owner of this campaign"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not campaign.is_telegram_campaign and not campaign.is_email_campaign:
+            return Response(
+                {"error": "Campaign's type (Telegram or email) should be set"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not campaign.is_active:
+            return Response(
+                {"error": "Set campaign's active to be able to run it"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not campaign.campaign_items.exists():
+            return Response(
+                {"error": "No campaign items to run"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        notification_message = campaigns_helpers.run_campaign(request.user, campaign)
+
+        return Response({"notification": notification_message})
 
 
 class MarketViewSet(viewsets.ModelViewSet):
