@@ -48,11 +48,11 @@ class ParserResult:
     ):
         self.url = url
         self.title = title
-        self.price = price
+        self.price = round(price, 2)
         self.currency = CURRENCIES_CONVERSION[currency]
         self.is_available = is_available  # waiting / out of stock
         self.is_on_sale = is_on_sale
-        self.price_before = price_before
+        self.price_before = round(price_before, 2)
         self.is_wrong_url = is_wrong_url
 
     def to_dict(self):
@@ -173,7 +173,7 @@ class AlloParser(CustomParser):
     def check_on_sale(self, soup):
         div_price = soup.find(class_="p-trade-price__old")
         if not div_price:
-            return False, None
+            return False, 0
 
         *price_components, currency = div_price.find(class_="sum").text.split()
 

@@ -27,31 +27,34 @@ def run_campaigns(bot: TelegramBot, update: Update, state: TelegramState):
     # typing action
     bot.sendChatAction(chat_id, bot.CHAT_ACTION_TYPING)
 
-    # get results
+    # record time
     now = datetime.now()
     now_formatted = now.strftime("%d/%m/%Y %H:%M:%S")
-    sep = "#" * 30
 
-    text = "Result of running active campaigns:\n"
-    text += f"*Run time*: {now_formatted}\n\n"
-
-    campaigns_length = len(campaigns)
-    for i, campaign in enumerate(campaigns):
+    # get campaigns results
+    campaigns_results_text = []
+    for campaign in campaigns:
         campaign_results = get_campaign_results(campaign)
-        text += get_telegram_run_campaign_text(
+        campaign_results_text = get_telegram_run_campaign_text(
             campaign, campaign_results, set_runtime=False
         )
-        text += "\n"
+        campaigns_results_text.append(campaign_results_text)
 
-        if i != campaigns_length - 1:
-            text += sep
-
-        text += "\n\n\n"
-
-    # send response
+    # send start message
+    text = "Result of running active campaigns:\n"
+    text += f"*Run time*: {now_formatted}\n\n"
     bot.sendMessage(
         chat_id,
         text,
         parse_mode=bot.PARSE_MODE_MARKDOWN,
         disable_web_page_preview=True,  # disable link preview
     )
+
+    # send campaigns results messages
+    for campaign_results_text in campaigns_results_text:
+        bot.sendMessage(
+            chat_id,
+            campaign_results_text,
+            parse_mode=bot.PARSE_MODE_MARKDOWN,
+            disable_web_page_preview=True,  # disable link preview
+        )

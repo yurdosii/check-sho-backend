@@ -181,7 +181,7 @@ def get_telegram_run_campaign_text(campaign, results, set_runtime=True):
         text += f"_On sale_: {EMOJI[result_is_on_sale]}\n"
 
         if result_is_on_sale:
-            diff = result_price_before - result_price
+            diff = round(result_price_before - result_price, 2)
             text += f"_Price before_: `{result_price_before}` (-*{diff}*)"
 
             # handle notify sale
