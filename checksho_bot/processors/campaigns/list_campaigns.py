@@ -133,35 +133,29 @@ def handle_callback_query(bot: TelegramBot, update, state):
     elif callback_data == "all":
         # show all campaigns at once
 
-        # TODO - if message is long, it won't show markdown, so split it by 4 campaigns
-        # and send a lot of messages
-
         # get campaigns
         telegram_user = state.telegram_user
         campaigns = telegram_user.user_campaigns
 
-        # get campaign data
-        sep = "#" * 30
-        campaigns_length = len(campaigns)
-        text = "Your campaigns:\n\n"
-
-        for i, campaign in enumerate(campaigns):
-            campaign_text = get_telegram_get_campaign_text(campaign)
-            text += campaign_text
-            text += "\n"
-
-            if i != campaigns_length - 1:
-                text += sep
-
-            text += "\n\n\n"
-
-        # send response
+        # send your campaigns message
+        text = "Your campaigns:"
         bot.sendMessage(
             chat_id,
             text,
             parse_mode=bot.PARSE_MODE_MARKDOWN,
             disable_web_page_preview=True,  # disable link preview
         )
+
+        # send campaigns text messages
+        for campaign in campaigns:
+            campaign_text = get_telegram_get_campaign_text(campaign)
+
+            bot.sendMessage(
+                chat_id,
+                campaign_text,
+                parse_mode=bot.PARSE_MODE_MARKDOWN,
+                disable_web_page_preview=True,  # disable link preview
+            )
 
         # change state
         state.set_name("")
