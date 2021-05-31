@@ -71,11 +71,6 @@ class ParserResult:
     def __str__(self):
         return str(self.to_dict())
 
-    # TODO
-    # Notes
-    # - може бути на знижці, з ціною і не доступне
-    # (https://www.citrus.ua/stiralnye-mashiny/stiralnaya-mashina-lg-f2r5ws0w-676002.html)
-
 
 @singleton
 class CitrusParser(CustomParser):
@@ -138,18 +133,12 @@ class AlloParser(CustomParser):
         page = requests.get(link)
         if not page.ok:
             return self.return_wrong_url_result(link)
-        # TODO - think about it (зараз як ніби все правильно встановлюють)
-        # if not page.ok:  # wrong url
-        #     return None
 
         soup = BeautifulSoup(page.content, "html.parser")
 
         div_price = soup.find("div", class_="p-trade-price__current")
         if not div_price:
             return self.return_empty_result(link)
-            # # чи це тільки кейс коли немає в наявності чи ще якісь
-            # print("No price was found")
-            # return
 
         price = float(div_price.find("meta", itemprop="price")["content"])
         currency = div_price.find("meta", itemprop="priceCurrency")["content"]

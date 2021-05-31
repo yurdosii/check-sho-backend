@@ -172,8 +172,6 @@ def add_campaign_title(bot: TelegramBot, update: Update, state: TelegramState):
     chat_id = update.get_chat().get_id()
     title = update.get_message().get_text()
 
-    # TODO - check whether campaign with given title for current user already exists
-
     # title can be only text so save it in memory
     state.update_memory({"title": title})
 
@@ -264,9 +262,6 @@ def add_campaign_items(bot: TelegramBot, update: Update, state: TelegramState):
     message_types=message_types.Text,
 )
 def add_campaign_item_url(bot: TelegramBot, update: Update, state: TelegramState):
-    # TODO - щоб було підтвердження, типу людина ввела url,
-    # TODO - я виводжу назву і ціну і він підтверджує
-
     # get chat data
     chat_id = update.get_chat().get_id()
     url = update.get_message().get_text()
@@ -422,8 +417,6 @@ def handle_campaign_finish_choice(
 
     # handle responses
     if text == AddCampaignButton.ADD_MORE_ITEMS.value:
-        # TODO - add new function that returns this choice and change state here
-
         # output existing items
         items = state.get_memory().get("items")
         response = "Existing items: \n"
@@ -579,7 +572,3 @@ def text_only(bot, update, state):
 def keyboard_only(bot, update, state):
     text = "Use keyboard below please"
     bot.sendMessage(update.get_chat().get_id(), text)
-
-
-# TODO - думаю щоб забрати оцей вибір і зразу додати хоча
-# TODO - б 1 Campaign Item і тоді вже питати чи ще чи всьо

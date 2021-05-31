@@ -254,9 +254,7 @@ CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
-# TODO: set to whatever value is adequate in your circumstances
 CELERY_TASK_TIME_LIMIT = 5 * 60
-# TODO: set to whatever value is adequate in your circumstances
 CELERY_TASK_SOFT_TIME_LIMIT = 60
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
@@ -267,7 +265,7 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # (when is True, WORKER - do nothing, BEAT - scheduler and worker)
 # (when is False, WORKER - do tasks, BEAT - is scheduler and send tasks to worker)
 CELERY_TASK_ALWAYS_EAGER = (  # tasks will be executed locally, instead of sent to the queue
-    True  # TODO - reload api and celery containers when value is changed
+    True  # reload api and celery containers when value is changed
 )
 CELERY_TASK_EAGER_PROPAGATES = True  # tasks called by .apply() will do exception
 

@@ -15,9 +15,6 @@ from . import serializers as campaigns_serializers
 logger = logging.getLogger(__name__)
 
 
-# TODO - в celery task заюзай select_related i prefetch_related
-
-
 class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
     queryset = campaigns_models.Campaign.objects.all()
     serializer_class = campaigns_serializers.CampaignSerializer
@@ -29,7 +26,6 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def run_endpoint_campaign(self, request, **kwargs):
-        # TODO - remove this
         campaign = self.get_object()
         if not campaign.is_active:
             return Response(
@@ -43,7 +39,6 @@ class CampaignViewSet(SerializerExtensionsAPIViewMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def test_email_campaign(self, request, **kwargs):
-        # TODO - remove this
         campaign = self.get_object()
         if not campaign.is_active:
             return Response(

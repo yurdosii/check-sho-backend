@@ -24,7 +24,6 @@ def get_market_parser(market):
 
 
 def run_endpoint_campaign(campaign):
-    # TODO - will check what options are on (email / telegram / ... і від цього вже буде пригати)
     logging.info(f"Running endpoint campaign '{campaign}'")
 
     campaign_results = get_campaign_results(campaign)
@@ -259,7 +258,6 @@ def unset_campaign_next_run(campaign):
     """
     If next_run is set but campaign isn't active - unset it
     """
-    # TODO - model's method should be
     campaign.next_run = None
     campaign.save()
 
@@ -433,7 +431,6 @@ def send_campaigns_results_to_telegram(user, results_info):
     Having user and results of campaigns that should be sent to Telegram
     Send them to Telegram
     """
-    # TODO - think, maybe 1 message for all Telegram campaigns and not 1 for each
     telegram_user = user.telegram_user
     if not telegram_user:
         logging.warning(

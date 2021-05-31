@@ -83,7 +83,6 @@ class Campaign(models.Model):
 
     @property
     def telegram_format(self):
-        # TODO - remove probably
         is_active = EMOJI[self.is_active]
 
         result = f"""
@@ -104,7 +103,9 @@ class Campaign(models.Model):
 
     @property
     def campaign_type(self):
-        # TODO - whether it is use
+        """
+        Used in Telegram get campaign info
+        """
         types = []
 
         if self.is_telegram_campaign:
@@ -124,12 +125,9 @@ class Campaign(models.Model):
 
     def run_telegram_campaign(self):
         results = self.run_campaign()
-        # breakpoint()
         return results
 
 
-# TODO (подумай) - різні налаштування CampaignItem, типу - "check price", "перевіряти наявність"
-# TODO - title shouldn't be empty, if user don't provide it, parse it from page on creation
 class CampaignItem(models.Model):
     title = models.CharField(_("Title"), max_length=1024, blank=True, null=True)
     description = models.CharField(
@@ -174,11 +172,8 @@ class CampaignItem(models.Model):
 
     @property
     def telegram_format(self):
-        # TODO - remove probably
         is_active = EMOJI[self.is_active]
 
-        # TODO - add name щоб був обов'язковий і шо
-        # TODO - типу якщо не встановлює то щоб автоматично підтягувати
         result = f"""
 _Url_: `{self.url}`
 *Active*: {is_active}
@@ -201,7 +196,6 @@ class Market(models.Model):
         return helpers.get_market_parser(self)
 
     def is_url_from_market(self, url):
-        # TODO - https://allo.ua/ - така штука проходить, а не мала б
         market_url_parsed = urlparse(self.url)
         item_url_parsed = urlparse(url)
 

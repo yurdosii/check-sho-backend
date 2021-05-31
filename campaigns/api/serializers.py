@@ -45,8 +45,6 @@ class CampaignItemSerializer(serializers.ModelSerializer):
         exclude = []
         list_serializer_class = CampaignItemListSerializer
 
-    # TODO - url validation - make GET requests if not response.ok: raise validation error
-
 
 class CampaignSerializer(SerializerExtensionsMixin, serializers.ModelSerializer):
     market = serializers.SlugRelatedField(

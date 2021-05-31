@@ -9,7 +9,6 @@ from checksho_bot.models import TelegramState
 from checksho_bot.processors import campaigns
 
 
-# TODO - Reset button in /addcampaign, /editcampaign, ...  (commands with a lot of steps)
 BOT_AVAILABLE_COMMANDS = OrderedDict(
     {
         "/status": {
@@ -65,7 +64,6 @@ def main_preprocessor(bot: TelegramBot, update: Update, state: TelegramState):
 
 
 def handle_help_command(chat_id: str, bot: TelegramBot, state: TelegramState):
-    # TODO - add headers like 'Campaigns:' and then list of commands that are related to campaigns
     command_items = BOT_AVAILABLE_COMMANDS.items()
     commands = [f"{k} - {v['description']}" for k, v in command_items]
     commands_text = "\n".join(commands)
@@ -83,7 +81,7 @@ def handle_start_command(chat_id: str, bot: TelegramBot, state: TelegramState):
     All you need to start monitoring is to create some campaigns.
     Then, according to the campaign's schedule, I'll send you the results here.
 
-    To keep things simple, you can create and configure campaigns via the web application 
+    To keep things simple, you can create and configure campaigns via the web application
     and use the Telegram bot only as a way to get monitoring results.
 
     You can control me by sending these commands:
@@ -92,7 +90,8 @@ def handle_start_command(chat_id: str, bot: TelegramBot, state: TelegramState):
     commands = [f"{k} - {v['description']}" for k, v in command_items]
     commands_text = "\n".join(commands)
 
-    text = "Hi, I'm CheckSho bot. I can help you automate monitoring goods from the online stores.\n\n"
+    text = "Hi, I'm CheckSho bot. I can help you automate monitoring goods from "
+    text += "the online stores.\n\n"
     text += "All you need to start monitoring is to create some campaigns.\n"
     text += "Then, according to the campaign's schedule, I'll send you the results here.\n\n"
     text += "To keep things simple, you can create and configure campaigns via the web application "

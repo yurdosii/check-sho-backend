@@ -171,7 +171,6 @@ def handle_callback_query(bot: TelegramBot, update, state):
 
     else:
         # change state to default (to be commands are only available)
-        # TODO - maybe change this (logic with stop scrolling)
 
         # send response
         text = "Scrolling was stopped, you can continue using commands as usual"
