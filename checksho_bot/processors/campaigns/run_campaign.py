@@ -1,5 +1,7 @@
 from enum import Enum
 
+from django.conf import settings
+from django.db.models import QuerySet
 from django_tgbot.decorators import processor
 from django_tgbot.exceptions import ProcessFailure
 from django_tgbot.state_manager import state_types, update_types
@@ -20,9 +22,9 @@ class RunCampaignState(Enum):
     CALLBACK = "run_campaign__callback"
 
 
-def get_campaigns_buttons(page: int):
+def get_campaigns_buttons(campaigns: QuerySet, page: int):
     p, previous_page, next_page = get_paginator_and_pages(
-        page, per_page=5, order_by="title"
+        campaigns, page, per_page=5, order_by="title"
     )
 
     campaigns_by_page = p.page(page).object_list
@@ -53,11 +55,32 @@ def run_campaign(bot: TelegramBot, update: Update, state: TelegramState):
     # get chat data
     chat_id = update.get_chat().get_id()
 
+    # get campaigns
+    telegram_user = state.telegram_user
+    campaigns = telegram_user.user_campaigns
+
+    # check campaigns
+    if not campaigns:
+        text = "No campaigns was created. "
+        text += "You can create a campaign using /addcampaign command "
+
+        # when localhost - it won't show as link
+        if "localhost" not in settings.CLIENT_URL:
+            text += f"or on [web application]({settings.CLIENT_URL})"
+
+        bot.sendMessage(
+            chat_id,
+            text,
+            parse_mode=bot.PARSE_MODE_MARKDOWN,
+            disable_web_page_preview=True,  # disable link preview
+        )
+        return
+
     # save page
     state.update_memory({"page": 1})
 
     # send response
-    campaigns_buttons = get_campaigns_buttons(1)
+    campaigns_buttons = get_campaigns_buttons(campaigns, 1)
     text = "Select campaign to run:"
     bot.sendMessage(
         chat_id,
@@ -94,8 +117,12 @@ def handle_callback_query(bot: TelegramBot, update, state):
         # save page
         state.update_memory({"page": page})
 
+        # get campaigns
+        telegram_user = state.telegram_user
+        campaigns = telegram_user.user_campaigns
+
         # send response
-        campaigns_buttons = get_campaigns_buttons(page)
+        campaigns_buttons = get_campaigns_buttons(campaigns, page)
         bot.editMessageText(
             "Select campaign to run:",
             chat_id,

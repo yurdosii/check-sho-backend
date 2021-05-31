@@ -17,11 +17,6 @@ class User(AbstractUser):
         TelegramUser, on_delete=models.SET_NULL, blank=True, null=True
     )
 
-    # TODO
-    # send_email = boolean  # чи відправляти на пошту
-    # send_telegram - boolean  # чи відправляти на телегу
-    # send_notifications - boolean # чи загалом відсилати, типу офнути взагалі
-
     def __str__(self):
         return self.username
 

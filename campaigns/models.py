@@ -1,3 +1,4 @@
+from datetime import timedelta
 from enum import Enum
 from urllib.parse import urlparse
 
@@ -16,9 +17,20 @@ class CampaignInterval(Enum):
     WEEK = "Every week"
 
 
+class CampaignIntervalTimedelta(Enum):
+    HOUR = timedelta(hours=1)
+    DAY = timedelta(days=1)
+    WEEK = timedelta(days=7)
+
+
+class CampaignType(Enum):
+    TELEGRAM = "is_telegram_campaign"
+    EMAIL = "is_email_campaign"
+
+
 class CampaignItemType(Enum):
-    CHECK_PRICE = "Check price"
-    CHECK_SALE = "Check sale"
+    NOTIFY_SALE = "Notify sale"
+    NOTIFY_AVAILABLE = "Notify available"
 
 
 class Campaign(models.Model):
@@ -35,7 +47,7 @@ class Campaign(models.Model):
     owner = models.ForeignKey(
         "users.User",
         related_name="campaigns",
-        on_delete=models.SET_NULL,  # TODO - think about it later
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
@@ -65,8 +77,13 @@ class Campaign(models.Model):
         return f"Campaign: {self.title} by {self.owner}"
 
     @property
+    def interval_timedelta(self):
+        interval_timedelta = CampaignIntervalTimedelta[self.interval].value
+        return interval_timedelta
+
+    @property
     def telegram_format(self):
-        is_active = EMOJI["YES"] if self.is_active else EMOJI["NO"]
+        is_active = EMOJI[self.is_active]
 
         result = f"""
 *Campaign*: {self.title}
@@ -84,8 +101,33 @@ class Campaign(models.Model):
 
         return result
 
+    @property
+    def campaign_type(self):
+        """
+        Used in Telegram get campaign info
+        """
+        types = []
 
-# TODO (подумай) - різні налаштування CampaignItem, типу - "check price", "перевіряти наявність"
+        if self.is_telegram_campaign:
+            types.append("Telegram")
+        if self.is_email_campaign:
+            types.append("Email")
+
+        type = "Not set"
+        if types:
+            type = ", ".join(types)
+        return type
+
+    def run_campaign(self):
+        results = helpers.get_campaign_results(self)
+        # results = list(map(lambda result: result.to_dict(), results_objects))
+        return results
+
+    def run_telegram_campaign(self):
+        results = self.run_campaign()
+        return results
+
+
 class CampaignItem(models.Model):
     title = models.CharField(_("Title"), max_length=1024, blank=True, null=True)
     description = models.CharField(
@@ -110,6 +152,8 @@ class CampaignItem(models.Model):
         blank=True,
         null=True,
     )
+    is_notify_sale = models.BooleanField(default=False)
+    is_notify_available = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -118,18 +162,23 @@ class CampaignItem(models.Model):
         return f"CampaignItem: {self.title} - {self.url}"
 
     @property
-    def telegram_format(self):
-        is_active = EMOJI["YES"] if self.is_active else EMOJI["NO"]
+    def notify_list(self):
+        notify = []
+        if self.is_notify_sale:
+            notify.append("Sale")
+        if self.is_notify_available:
+            notify.append("Availability")
+        return notify
 
-        # TODO - add name щоб був обов'язковий і шо
-        # TODO - типу якщо не встановлює то щоб автоматично підтягувати
+    @property
+    def telegram_format(self):
+        is_active = EMOJI[self.is_active]
+
         result = f"""
 _Url_: `{self.url}`
 *Active*: {is_active}
         """
         return result
-
-    # TODO - - validation by market url - думаю не
 
 
 class Market(models.Model):
@@ -147,7 +196,6 @@ class Market(models.Model):
         return helpers.get_market_parser(self)
 
     def is_url_from_market(self, url):
-        # TODO - https://allo.ua/ - така штука проходить, а не мала б
         market_url_parsed = urlparse(self.url)
         item_url_parsed = urlparse(url)
 

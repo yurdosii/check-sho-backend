@@ -22,6 +22,38 @@ from ..utils import remove_keyboard_markup
 # - user cannot edit what he already wrote in the end (for now)
 
 
+def get_text_and_buttons_one_by_one_or_many_at_once():
+    """
+    Choice between "One by one" and "Many at once
+    """
+    text = "Add campaign items:\n"
+    text += "- one by one with details (like title, is active)\n"
+    text += "- many at once providing only list of urls"
+    buttons = [
+        [
+            KeyboardButton.a(text=AddCampaignButton.ITEMS_ONE_BY_ONE.value),
+            KeyboardButton.a(text=AddCampaignButton.ITEMS_MANY_AT_ONCE.value),
+        ]
+    ]
+    return text, buttons
+
+
+def get_text_and_buttons_finish_choice():
+    """
+    Choice between "Add more items" and "Finish"
+    """
+    text = "Next:\n"
+    text += "- add more items\n"
+    text += "- finish"
+    buttons = [
+        [
+            KeyboardButton.a(text=AddCampaignButton.ADD_MORE_ITEMS.value),
+            KeyboardButton.a(text=AddCampaignButton.FINISH.value),
+        ]
+    ]
+    return text, buttons
+
+
 class AddCampaignButton(Enum):
     ITEMS_ONE_BY_ONE = "One by one"
     ITEMS_MANY_AT_ONCE = "Many at once"
@@ -46,8 +78,6 @@ class AddItemState(Enum):
     TITLE = "add_campaign_item__title"
     FINISH_CHOICE = "add_campaign_item__finish_choice"
 
-    URLS_CHOICE = "add_campaign_item__urls_choice"
-
 
 @telegram_command
 def add_campaign(bot: TelegramBot, update: Update, state: TelegramState):
@@ -62,6 +92,7 @@ def add_campaign(bot: TelegramBot, update: Update, state: TelegramState):
     markets = Market.objects.all()
     markets_buttons = list(map(lambda market: KeyboardButton.a(market.title), markets))
     markets_buttons_by_chunks = list(split_into_chunks(markets_buttons, 2))
+    markets_buttons_by_chunks.append([KeyboardButton.a("Reset adding")])
 
     # send response
     text = "Please choose market:"
@@ -82,7 +113,6 @@ def add_campaign(bot: TelegramBot, update: Update, state: TelegramState):
 @processor(
     state_manager,
     from_states=AddCampaignState.MARKET.value,
-    success=AddCampaignState.TITLE.value,
     fail=state_types.Keep,
     message_types=message_types.Text,
 )
@@ -101,8 +131,28 @@ def add_campaign_market(bot: TelegramBot, update: Update, state: TelegramState):
         text = "Thanks, next is campaign's title:"
         bot.sendMessage(chat_id, text, reply_markup=remove_keyboard_markup())
 
-        # update state
+        # update memory
         state.set_memory({"market_title": title})
+
+        # change state
+        state.set_name(AddCampaignState.TITLE.value)
+
+    elif title == "Reset adding":
+        # reset adding
+
+        # send response
+        text = "Adding stopped, you can continue using commands as usual"
+        bot.sendMessage(
+            chat_id,
+            text,
+            reply_markup=remove_keyboard_markup(),
+        )
+
+        # change state
+        state.set_name("")
+
+        # reset memory
+        state.reset_memory()
 
     else:
         # keep this step
@@ -121,8 +171,6 @@ def add_campaign_title(bot: TelegramBot, update: Update, state: TelegramState):
     # get chat data
     chat_id = update.get_chat().get_id()
     title = update.get_message().get_text()
-
-    # TODO - check whether campaign with given title for current user already exists
 
     # title can be only text so save it in memory
     state.update_memory({"title": title})
@@ -155,7 +203,7 @@ def add_campaign_interval(bot: TelegramBot, update: Update, state: TelegramState
 
     # check interval
     try:
-        CampaignInterval(interval)
+        formatted_interval = CampaignInterval(interval)
     except ValueError:
         # keep this step
         text = "Use keyboard below please"
@@ -163,18 +211,10 @@ def add_campaign_interval(bot: TelegramBot, update: Update, state: TelegramState
         raise ProcessFailure
 
     # save interval in memory
-    state.update_memory({"interval": interval})
+    state.update_memory({"interval": formatted_interval.name})
 
     # proceed to campaign items
-    text = "Add campaign items:\n"
-    text += "- one by one with details (like title, is active)\n"
-    text += "- many at once providing only list of urls"
-    buttons = [
-        [
-            KeyboardButton.a(text=AddCampaignButton.ITEMS_ONE_BY_ONE.value),
-            KeyboardButton.a(text=AddCampaignButton.ITEMS_MANY_AT_ONCE.value),
-        ]
-    ]
+    text, buttons = get_text_and_buttons_one_by_one_or_many_at_once()
     bot.sendMessage(
         chat_id,
         text,
@@ -222,9 +262,6 @@ def add_campaign_items(bot: TelegramBot, update: Update, state: TelegramState):
     message_types=message_types.Text,
 )
 def add_campaign_item_url(bot: TelegramBot, update: Update, state: TelegramState):
-    # TODO - щоб було підтвердження, типу людина ввела url,
-    # TODO - я виводжу назву і ціну і він підтверджує
-
     # get chat data
     chat_id = update.get_chat().get_id()
     url = update.get_message().get_text()
@@ -287,15 +324,49 @@ def handle_campaign_item_title_choice(
     if text == AddCampaignButton.ITEM_CUSTOM_TITLE.value:
         response = "And your custom title will be:"
         bot.sendMessage(chat_id, response, reply_markup=remove_keyboard_markup())
+
+        # update state
         state.set_name(AddItemState.TITLE.value)
 
     elif text == AddCampaignButton.ITEM_TITLE_FROM_PAGE.value:
-        # TODO - тут пропарси title
-        response = "Great! So title will be:"
-        bot.sendMessage(chat_id, response, reply_markup=remove_keyboard_markup())
-        state.set_name("")
 
-        # set memory (get items[-1] and then update last with url)
+        # parse item title
+        memory = state.get_memory()
+        market_title = memory.get("market_title")
+        market = Market.objects.filter(title=market_title).first()
+
+        items = memory.get("items")
+        url = items[-1].get("url")
+        item_title = campaigns_helpers.get_campaign_item_title(market, url)
+
+        # update state
+        items[-1]["title"] = item_title
+        state.update_memory({"items": items})
+
+        # send response
+        response = f"Great! So title will be: `{item_title}`"
+        bot.sendMessage(
+            chat_id,
+            response,
+            parse_mode=bot.PARSE_MODE_MARKDOWN,
+            reply_markup=remove_keyboard_markup(),
+        )
+
+        # proceed to finish choice
+        text, buttons = get_text_and_buttons_finish_choice()
+        bot.sendMessage(
+            chat_id,
+            text,
+            reply_markup=ReplyKeyboardMarkup.a(
+                keyboard=buttons,
+                resize_keyboard=True,
+                one_time_keyboard=True,
+            ),
+        )
+
+        # update state
+        state.set_name(AddItemState.FINISH_CHOICE.value)
+
     else:
         response = "Use keyboard below please"
         bot.sendMessage(chat_id, response)
@@ -319,15 +390,7 @@ def add_campaign_item_title(bot: TelegramBot, update: Update, state: TelegramSta
     state.update_memory({"items": items})
 
     # proceed to finish choice
-    text = "Next:\n"
-    text += "- add more items\n"
-    text += "- finish"
-    buttons = [
-        [
-            KeyboardButton.a(text=AddCampaignButton.ADD_MORE_ITEMS.value),
-            KeyboardButton.a(text=AddCampaignButton.FINISH.value),
-        ]
-    ]
+    text, buttons = get_text_and_buttons_finish_choice()
     bot.sendMessage(
         chat_id,
         text,
@@ -345,7 +408,7 @@ def add_campaign_item_title(bot: TelegramBot, update: Update, state: TelegramSta
     fail=state_types.Keep,
     message_types=message_types.Text,
 )
-def handle_campaign_item_finish_choice(
+def handle_campaign_finish_choice(
     bot: TelegramBot, update: Update, state: TelegramState
 ):
     # get chat data
@@ -354,28 +417,33 @@ def handle_campaign_item_finish_choice(
 
     # handle responses
     if text == AddCampaignButton.ADD_MORE_ITEMS.value:
-        # TODO - should return to choice one by one / many at once
-        # TODO - add new function that returns this choice and change state here
-
         # output existing items
         items = state.get_memory().get("items")
         response = "Existing items: \n"
         response += "\n".join(["- " + item["url"] for item in items]) + "\n\n"
         bot.sendMessage(chat_id, response, reply_markup=remove_keyboard_markup())
 
-        # output ask for new item
-        response = "New item's URL:"
-        bot.sendMessage(chat_id, response)
+        # proceed to campaign items
+        text, buttons = get_text_and_buttons_one_by_one_or_many_at_once()
+        bot.sendMessage(
+            chat_id,
+            text,
+            reply_markup=ReplyKeyboardMarkup.a(
+                keyboard=buttons,
+                resize_keyboard=True,
+                one_time_keyboard=True,
+            ),
+        )
 
         # update state
-        state.set_name(AddItemState.URL.value)
+        state.set_name(AddCampaignState.ITEMS.value)
 
     elif text == AddCampaignButton.FINISH.value:
-        # TODO - дублюється
-
         # create campaign
         memory = state.get_memory()
-        campaign = campaigns_helpers.create_campaign_from_telegram(memory)
+        telegram_user = state.telegram_user
+        user = getattr(telegram_user, "user", None)
+        campaign = campaigns_helpers.create_campaign_from_telegram(memory, user)
 
         # send campaign's data
         response = "Great! So campaign with this data was created:\n\n"
@@ -402,7 +470,7 @@ def handle_campaign_item_finish_choice(
 @processor(
     state_manager,
     from_states=AddItemState.URLS.value,
-    success=AddItemState.URLS_CHOICE.value,
+    success=AddItemState.FINISH_CHOICE.value,
     fail=state_types.Keep,
     message_types=message_types.Text,
 )
@@ -439,12 +507,13 @@ def add_campaign_item_urls(bot: TelegramBot, update: Update, state: TelegramStat
 
         # send response
         text = "Thanks. URLs are valid"
-        buttons = [
-            [
-                KeyboardButton.a(text=AddCampaignButton.ADD_MORE_URLS.value),
-                KeyboardButton.a(text=AddCampaignButton.FINISH.value),
-            ]
-        ]
+        bot.sendMessage(
+            chat_id,
+            text,
+        )
+
+        # proceed to finish choice
+        text, buttons = get_text_and_buttons_finish_choice()
         bot.sendMessage(
             chat_id,
             text,
@@ -454,6 +523,9 @@ def add_campaign_item_urls(bot: TelegramBot, update: Update, state: TelegramStat
                 one_time_keyboard=True,
             ),
         )
+
+        # update state
+        state.set_name(AddItemState.FINISH_CHOICE.value)
 
     else:
         # send list of valid and invalid urls
@@ -468,53 +540,6 @@ def add_campaign_item_urls(bot: TelegramBot, update: Update, state: TelegramStat
         # ask for urls list to be resent
         text = "List contains invalid urls. Fix and send again:"
         bot.sendMessage(chat_id, text)
-        raise ProcessFailure
-
-
-@processor(
-    state_manager,
-    from_states=AddItemState.URLS_CHOICE.value,
-    fail=state_types.Keep,
-    message_types=message_types.Text,
-)
-def handle_campaign_item_urls_choice(
-    bot: TelegramBot, update: Update, state: TelegramState
-):
-    # get chat data
-    chat_id = update.get_chat().get_id()
-    text = update.get_message().get_text()
-
-    # handle responses
-    if text == AddCampaignButton.ADD_MORE_URLS.value:
-        response = "Fine! Send me list of urls then:"
-        bot.sendMessage(chat_id, response, reply_markup=remove_keyboard_markup())
-        state.set_name(AddItemState.URLS.value)
-
-    elif text == AddCampaignButton.FINISH.value:
-        # TODO - дублюється
-
-        # create campaign
-        memory = state.get_memory()
-        campaign = campaigns_helpers.create_campaign_from_telegram(memory)
-
-        # send campaign's data
-        response = "Great! So campaign with this data was created:\n\n"
-        response += campaigns_helpers.get_telegram_get_campaign_text(campaign)
-        bot.sendMessage(
-            chat_id,
-            response,
-            reply_markup=remove_keyboard_markup(),
-            parse_mode=bot.PARSE_MODE_MARKDOWN,
-            disable_web_page_preview=True,  # disable link preview
-        )
-
-        # update state and memory
-        state.set_name("")
-        state.reset_memory()
-
-    else:
-        response = "Use keyboard below please"
-        bot.sendMessage(chat_id, response)
         raise ProcessFailure
 
 
@@ -547,7 +572,3 @@ def text_only(bot, update, state):
 def keyboard_only(bot, update, state):
     text = "Use keyboard below please"
     bot.sendMessage(update.get_chat().get_id(), text)
-
-
-# TODO - думаю щоб забрати оцей вибір і зразу додати хоча
-# TODO - б 1 Campaign Item і тоді вже питати чи ще чи всьо

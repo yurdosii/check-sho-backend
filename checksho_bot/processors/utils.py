@@ -1,8 +1,7 @@
 from django.core.paginator import Paginator
+from django.db.models import QuerySet
 from django_tgbot.types.inlinekeyboardbutton import InlineKeyboardButton
 from django_tgbot.types.replykeyboardremove import ReplyKeyboardRemove
-
-from campaigns.models import Campaign
 
 
 def remove_keyboard_markup():
@@ -15,14 +14,11 @@ def get_paginator_pages(page, max_pages):
     return (previous_page, next_page)
 
 
-def get_paginator_and_pages(page: int, per_page: int = 5, order_by=None):
-    # TODO - campaigns by user
-    # TODO - cache somehow this
-
+def get_paginator_and_pages(
+    campaigns: QuerySet, page: int, per_page: int = 5, order_by=None
+):
     if order_by:
-        campaigns = Campaign.objects.all().order_by(order_by)
-    else:
-        campaigns = Campaign.objects.all()
+        campaigns = campaigns.order_by(order_by)
 
     p = Paginator(campaigns, per_page)
 

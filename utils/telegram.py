@@ -2,7 +2,6 @@ import functools
 import logging
 
 
-# TODO - enum ???
 EMOJI = {
     True: "✅",
     False: "❌",

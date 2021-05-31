@@ -6,9 +6,25 @@ from django_tgbot.models import (
     AbstractTelegramUser,
 )
 
+from campaigns.models import Campaign
+
 
 class TelegramUser(AbstractTelegramUser):
-    pass
+    @property
+    def user_campaigns(self):
+        campaigns = []
+        user = getattr(self, "user", None)
+        if user:
+            campaigns = Campaign.objects.filter(owner=user)
+        return campaigns
+
+    @property
+    def user_telegram_chat(self):
+        telegram_state = self.telegram_states.first()
+        telegram_chat = None
+        if telegram_state:
+            telegram_chat = telegram_state.telegram_chat
+        return telegram_chat
 
 
 class TelegramChat(AbstractTelegramChat):

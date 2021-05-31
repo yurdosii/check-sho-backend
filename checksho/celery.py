@@ -28,7 +28,13 @@ app.autodiscover_tasks()
 
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
-    pass
+    from campaigns.tasks import run_scheduled_campaigns
+
+    sender.add_periodic_task(
+        crontab(minute="*/60"),  # every 60 minutes
+        run_scheduled_campaigns.s(),
+        name="run_scheduled_campaigns",
+    )
 
     # This 3 tasks tested
     # # Calls test('hello') every 10 seconds.
