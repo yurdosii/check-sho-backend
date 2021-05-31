@@ -7,7 +7,6 @@ from django_tgbot.types.update import Update
 from checksho_bot.bot import TelegramBot, state_manager
 from checksho_bot.models import TelegramState
 from checksho_bot.processors import campaigns
-from utils.telegram import telegram_command
 
 
 # TODO - Reset button in /addcampaign, /editcampaign, ...  (commands with a lot of steps)
@@ -57,6 +56,8 @@ def main_preprocessor(bot: TelegramBot, update: Update, state: TelegramState):
 
     if text == "/help":
         handle_help_command(chat_id, bot, state)
+    elif text == "/start":
+        handle_start_command(chat_id, bot, state)
     elif text in BOT_AVAILABLE_COMMANDS:
         BOT_AVAILABLE_COMMANDS[text]["function"](bot, update, state)  # run command
     else:
@@ -70,6 +71,33 @@ def handle_help_command(chat_id: str, bot: TelegramBot, state: TelegramState):
     commands_text = "\n".join(commands)
 
     text = f"You can control me by sending these commands: \n\n{commands_text}"
+
+    bot.sendMessage(chat_id, text)
+    state.set_name("")
+
+
+def handle_start_command(chat_id: str, bot: TelegramBot, state: TelegramState):
+    """
+    Hi, I'm CheckSho bot. I can help you automate monitoring goods from the online stores.
+
+    All you need to start monitoring is to create some campaigns.
+    Then, according to the campaign's schedule, I'll send you the results here.
+
+    To keep things simple, you can create and configure campaigns via the web application 
+    and use the Telegram bot only as a way to get monitoring results.
+
+    You can control me by sending these commands:
+    """
+    command_items = BOT_AVAILABLE_COMMANDS.items()
+    commands = [f"{k} - {v['description']}" for k, v in command_items]
+    commands_text = "\n".join(commands)
+
+    text = "Hi, I'm CheckSho bot. I can help you automate monitoring goods from the online stores.\n\n"
+    text += "All you need to start monitoring is to create some campaigns.\n"
+    text += "Then, according to the campaign's schedule, I'll send you the results here.\n\n"
+    text += "To keep things simple, you can create and configure campaigns via the web application "
+    text += "and use the Telegram bot only as a way to get monitoring results.\n\n\n"
+    text += f"You can control me by sending these commands: \n\n{commands_text}"
 
     bot.sendMessage(chat_id, text)
     state.set_name("")
