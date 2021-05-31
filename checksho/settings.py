@@ -34,6 +34,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
+# ngrok link without "https://" paste here in place of existing
+ALLOWED_HOSTS.extend(
+    ["53caa0ce0878.ngrok.io"]
+)
+
 
 # APPS
 
@@ -217,6 +222,8 @@ DEFAULT_FROM_EMAIL = "CheckSho diploma <diploma.yurii@gmail.com>"
 EMAIL_USE_TLS = True
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 
 
 # Authentication - jwt
@@ -271,3 +278,8 @@ CELERY_TASK_EAGER_PROPAGATES = True  # tasks called by .apply() will do exceptio
 
 # Client URL
 CLIENT_URL = "http://localhost:3000/"
+
+
+# Telegram
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
+TELEGRAM_APP_NAME = env("TELEGRAM_APP_NAME", default="")

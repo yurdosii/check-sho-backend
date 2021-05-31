@@ -282,7 +282,7 @@ def run_campaign(user, campaign):
 
     # send to email
     if campaign.is_email_campaign and campaign.owner and campaign.owner.email:
-        if getattr(settings, "EMAIL_HOST", None):
+        if getattr(settings, "EMAIL_HOST_USER", None):
             send_campaign_results_to_email(campaign, campaign_results)
             sent_to.append("email")
         else:
@@ -453,7 +453,7 @@ def send_campaigns_results_to_email(user, results_info):
         logging.warning("User's email isn't set. Unable to send results to email")
         return
 
-    if not getattr(settings, "EMAIL_HOST", None):
+    if not getattr(settings, "EMAIL_HOST_USER", None):
         logging.warning("Email configuration missing")
         return
 
